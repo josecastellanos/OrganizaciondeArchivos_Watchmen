@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2010-10-07T12:21:10
+# Project created by QtCreator 2010-10-19T11:47:22
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core
 
 QT       -= gui
 
-TARGET = testconsole
+TARGET = Ebits
 CONFIG   += console
 CONFIG   -= app_bundle
 
@@ -16,4 +16,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    otro.c
+    libbits.cpp
+
+HEADERS += \
+    libbits.h

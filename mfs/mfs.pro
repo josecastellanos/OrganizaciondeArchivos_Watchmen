@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2010-10-07T12:21:10
+# Project created by QtCreator 2010-10-19T15:04:06
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core
 
 QT       -= gui
 
-TARGET = testconsole
+TARGET = mfs
 CONFIG   += console
 CONFIG   -= app_bundle
 
@@ -16,4 +16,7 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    otro.c
+    _c.cpp
+
+HEADERS += \
+    _c.h
