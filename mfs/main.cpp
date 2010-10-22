@@ -20,6 +20,30 @@ typedef struct
     int pointer;
 }te;
 
+typedef struct
+{
+    int size_bytes;
+    int pDirecto;
+    int pIndirecto;
+    int pIndirectoDoble;
+    int file_entry;
+    char *tags[250];
+//    char tags_cancion[128];
+    int numBloques;
+    songinfo tags;
+}inodo;
+
+typedef struct
+{
+    char tag[3];
+    char title[30];
+    char artist[30];
+    char album[30];
+    char year[4];
+    char comment[28];
+    char genre[3];
+}songinfo;
+
 const int bs=1024;
 const int fepb=16;
 const int tepb=32;
@@ -44,6 +68,32 @@ void mostrarmapa(unsigned char *m, int cuantos)
      mostrarbits(m[i]);
    }
    printf("\n ------- fin del mapa --------\n");
+}
+
+int cant_apagados(unsigned char *m, int cuantos)
+{
+    int result=0;
+    for(int i=0; i<cuantos; i++)
+    {
+        int valordelbit = m[i / 8] & (1<<(7-i%8));
+        if(!(valordelbit == (1<<(7-i%8))))
+        {
+            result++;
+        }
+    }
+    return result;
+}
+
+int freeblock(unsigned char *m, int cuantos)
+{
+    for(int i=0; i<cuantos; i++)
+    {
+        int valordelbit = m[i / 8] & (1<<(7-i%8));
+        if(!(valordelbit == (1<<(7-i%8))))
+        {
+            return i;
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -158,7 +208,17 @@ int main(int argc, char *argv[])
 
                 fread(mapabits,temp.disksize/8,1,disco);
 
+                int cant=size/bs;
+                int length=(temp.disksize/8)/bs;
 
+                if(cant<=cant_apagados(mapabits,length))
+                {
+                    int free=freeblock(mapabits,length)+(1+(temp.disksize/8)/bs+temp.fes+temp.tes);
+
+                    fseek(archivo,free*bs,0);
+
+
+                }
             }
         }
     }
