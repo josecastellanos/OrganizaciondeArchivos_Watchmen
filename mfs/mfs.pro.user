@@ -91,10 +91,8 @@
     <value key="ProjectExplorer.ProjectConfiguration.Id" type="QString">Qt4ProjectManager.Qt4RunConfiguration</value>
     <value key="Qt4ProjectManager.Qt4RunConfiguration.BaseEnvironmentBase" type="int">2</value>
     <valuelist key="Qt4ProjectManager.Qt4RunConfiguration.CommandLineArguments" type="QVariantList">
-     <value type="QString">-c</value>
-     <value type="QString">204800</value>
-     <value type="QString">7</value>
-     <value type="QString">32</value>
+     <value type="QString">-a</value>
+     <value type="QString">3.mp3</value>
      <value type="QString">disco.dat</value>
     </valuelist>
     <value key="Qt4ProjectManager.Qt4RunConfiguration.ProFile" type="QString">mfs.pro</value>
@@ -102,8 +100,8 @@
     <value key="Qt4ProjectManager.Qt4RunConfiguration.UseTerminal" type="bool">true</value>
     <valuelist key="Qt4ProjectManager.Qt4RunConfiguration.UserEnvironmentChanges" type="QVariantList"/>
     <value key="Qt4ProjectManager.Qt4RunConfiguration.UserSetName" type="bool">false</value>
-    <value key="Qt4ProjectManager.Qt4RunConfiguration.UserSetWorkingDirectory" type="bool">false</value>
-    <value key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory" type="QString"></value>
+    <value key="Qt4ProjectManager.Qt4RunConfiguration.UserSetWorkingDirectory" type="bool">true</value>
+    <value key="Qt4ProjectManager.Qt4RunConfiguration.UserWorkingDirectory" type="QString">/home/joc/Escritorio/Organizacion de Archivos/OrganizaciondeArchivos_Watchman/mfs-build-desktop</value>
    </valuemap>
    <value key="ProjectExplorer.Target.RunConfigurationCount" type="int">1</value>
   </valuemap>
