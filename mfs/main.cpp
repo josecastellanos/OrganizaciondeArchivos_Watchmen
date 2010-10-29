@@ -117,7 +117,7 @@ void killblock(unsigned char *m, int cual, int cuantos)
 
 int query(char *cancion, char *diskname)
 {
-    if((disco=fopen(diskname, "wb"))==NULL)
+    if((disco=fopen(diskname, "rb"))==NULL)
     {
         exit(1);
     }
@@ -144,14 +144,14 @@ int query(char *cancion, char *diskname)
         }
     }
 
-    return temp2.pointer_inodo;
+    return temp2.pointer_inodo*bs;
 
     fclose(disco);
 }
 
 void queryinodo(int pos, char *diskname)
 {
-    if((disco=fopen(diskname, "wb"))==NULL)
+    if((disco=fopen(diskname, "rb"))==NULL)
     {
         exit(1);
     }
@@ -707,7 +707,183 @@ int main(int argc, char *argv[])
     }
     else if(strcmp(argv[1],"-d")==0 && argc==4)
     {
+        int cont=0;
 
+        if((disco=fopen(argv[3], "rb+"))==NULL)
+        {
+            exit(1);
+        }
+
+        header temp;
+
+        fread(&temp,sizeof(header),1,disco);
+
+        fseek(disco,bs,0);
+
+        unsigned char *mapabits;
+        mapabits = (unsigned char *)malloc(((int)temp.disksize/8));
+
+        fread(mapabits,((int)temp.disksize/8),1,disco);
+
+        int length=(int)temp.disksize;
+
+        int i;
+
+        unsigned char bloque[bs];
+        memset(bloque,0,bs);
+
+        for(i=0; i<(int)temp.fes*fepb; i++)
+        {
+            fe temp2;
+
+            int fepos=ftell(disco);
+
+            fread(&temp2,sizeof(fe),1,disco);
+
+            if(strcmp(temp2.filename,argv[2])==0)
+            {
+                    killblock(mapabits,temp2.pointer_inodo*bs,length);
+
+                    fseek(disco,temp2.pointer_inodo*bs,0);
+
+                    inodo n;
+
+                    fread(&n,sizeof(inodo),1,disco);
+
+                    int j;
+
+                    for(j=0; j<12; j++)
+                    {
+                        if(cont!=((int)n.numBloques-1))
+                        {
+                            killblock(mapabits,n.pDirecto[j],length);
+
+                            fseek(disco,n.pDirecto[j]*bs,0);
+
+                            fwrite(bloque,bs,1,disco);
+                            cont++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if(n.numBloques>12)//Primer indirecto simple
+                    {
+                        killblock(mapabits,n.pIndirecto,length);
+
+                        fseek(disco,n.pIndirecto*bs,0);
+
+                        int b[256];
+
+                        fread(b,bs,1,disco);
+
+                        for(j=0; j<256; j++)
+                        {
+                            if(cont!=((int)n.numBloques-1))
+                            {
+                                killblock(mapabits,b[j],length);
+
+                                fseek(disco,b[j]*bs,0);
+
+                                fwrite(bloque,bs,1,disco);
+                                cont++;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+
+                        fseek(disco,n.pIndirecto*bs,0);
+
+                        fwrite(bloque,bs,1,disco);
+                    }
+
+                    if(n.numBloques>268)//Indirectos dobles
+                    {
+                        killblock(mapabits,n.pIndirectoDoble,length);
+
+                        fseek(disco,n.pIndirectoDoble*bs,0);
+
+                        int b[256];
+
+                        fread(b,bs,1,disco);
+
+                        int k;
+
+                        for(j=0; j<256; j++)
+                        {
+                            if(cont==((int)n.numBloques-1))
+                            {
+                                break;
+                            }
+
+                            killblock(mapabits,b[j],length);
+
+                            fseek(disco,b[j]*bs,0);
+
+                            int e[256];
+
+                            fread(e,bs,1,disco);
+
+                            for(k=0; k<256; k++)
+                            {
+                                if(cont!=((int)n.numBloques-1))
+                                {
+                                    killblock(mapabits,e[k],length);
+
+                                    fseek(disco,e[k]*bs,0);
+
+                                    fwrite(bloque,bs,1,disco);
+                                    cont++;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+
+                            fseek(disco,b[j]*bs,0);
+
+                            fwrite(bloque,bs,1,disco);
+                        }
+
+                        fseek(disco,n.pIndirectoDoble*bs,0);
+
+                        fwrite(bloque,bs,1,disco);
+                    }
+
+                    fseek(disco,temp2.pointer_inodo*bs,0);
+
+                    fwrite(bloque,bs,1,disco);
+
+                    fseek(disco,fepos,0);
+
+                    strcpy(temp2.filename,"");
+                    temp2.pointer_inodo=-1;
+
+                    fwrite(&temp2,sizeof(fe),1,disco);
+
+                    fseek(disco,bs,0);
+
+                    fwrite(mapabits,((int)temp.disksize/8),1,disco);
+
+                    break;
+                }
+                else
+                {
+                    exit(1);
+                }
+
+        }
+
+        fclose(disco);
+
+        free(mapabits);
+
+        printf("DELETE:El archivo %s se ha eliminado correctamente",argv[2]);
     }
     else if(strcmp(argv[1],"-t")==0 && argc==5)
     {
@@ -727,7 +903,7 @@ int main(int argc, char *argv[])
     }
     else if(strcmp(argv[1],"-qa")==0 && argc==4)
     {
-        if((disco=fopen(argv[3], "wb"))==NULL)
+        if((disco=fopen(argv[3], "rb"))==NULL)
         {
             exit(1);
         }
