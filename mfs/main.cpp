@@ -115,18 +115,51 @@ void killblock(unsigned char *m, int cual, int cuantos)
     }
 }
 
-int query(char *cancion, char *diskname)
+int query(char *cancion, FILE *disco)
 {
-    if((disco=fopen(diskname, "rb"))==NULL)
-    {
-        exit(1);
-    }
+    fseek(disco,0,0);
 
     header temp;
 
     fread(&temp,sizeof(header),1,disco);
 
     int pos=(1+(((int)temp.disksize/8)/bs))*bs;
+
+    fseek(disco,pos,0);
+
+    int i;
+    int ver=0;
+
+    fe temp2;
+
+    for(i=0; i<(int)temp.fes*fepb; i++)
+    {
+        fread(&temp2,sizeof(fe),1,disco);
+
+        if(strcmp(temp2.filename,cancion)==0)
+        {
+            ver=1;
+            break;
+        }
+    }
+
+    if(ver==0)
+    {
+        return -1;
+    }
+
+    return temp2.pointer_inodo;
+}
+
+int existeCancion(char *cancion, FILE *disco)
+{
+    fseek(disco,0,0);
+
+    header temp;
+
+    fread(&temp,sizeof(header),1,disco);
+
+    int pos=(1+((int)temp.disksize/8)/bs)*bs;
 
     fseek(disco,pos,0);
 
@@ -140,22 +173,35 @@ int query(char *cancion, char *diskname)
 
         if(strcmp(temp2.filename,cancion)==0)
         {
-            break;
+            return i;
         }
     }
 
-    return temp2.pointer_inodo*bs;
-
-    fclose(disco);
+    return -1;
 }
 
-void queryinodo(int pos, char *diskname)
+void verTags(char *cancion,FILE *disco)
 {
-    if((disco=fopen(diskname, "rb"))==NULL)
+    int pos=existeCancion(cancion,disco);
+
+    if(pos==-1)
     {
         exit(1);
     }
 
+    fseek(disco,query(cancion,disco)*bs,0);
+
+    inodo n;
+
+    fread(&n,sizeof(inodo),1,disco);
+
+    printf("%s",n.tags);
+
+    fclose(disco);
+}
+
+void queryinodo(int pos, FILE *disco)
+{
     inodo n;
 
     fseek(disco,pos,0);
@@ -180,11 +226,294 @@ void queryinodo(int pos, char *diskname)
 
     printf("Size del archivo: %d#",n.size_bytes);
 
-    //printf(": %s",temp.filename);//Utilizar -it
+    printf("Tags: ");
+
+    verTags(temp.filename,disco);
+
+    printf("#");
 
     printf("Numero de bloques: %d",n.numBloques);
+}
+
+int existeTag(char *tag, FILE *disco)
+{
+    fseek(disco,0,0);
+
+    header temp;
+
+    fread(&temp,sizeof(header),1,disco);
+
+    int pos=(1+(((int)temp.disksize/8)/bs)+(int)temp.fes)*bs;
+
+    fseek(disco,pos,0);
+
+    int i;
+
+    te temp2;
+
+    for(i=0; i<(int)temp.tes*tepb; i++)
+    {
+        fread(&temp2,sizeof(te),1,disco);
+
+        if(strcmp(temp2.tag,tag)==0)
+        {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int existeInodo(int arr[], int pointer)
+{
+    int i;
+
+    for(i=0; i<256; i++)
+    {
+        if(arr[i]==pointer)
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+void putTag(char *tag,char *cancion,char *diskname)
+{
+    if((disco=fopen(diskname, "rb+"))==NULL)
+    {
+        exit(1);
+    }
+
+    int ver=existeCancion(cancion,disco);
+
+    if(ver==-1)
+    {
+        exit(1);
+    }
+
+    fseek(disco,0,0);
+
+    header temp;
+
+    fread(&temp,sizeof(header),1,disco);
+
+    fseek(disco,bs,0);
+
+    unsigned char *mapabits;
+    mapabits = (unsigned char *)malloc(((int)temp.disksize/8));
+
+    fread(mapabits,((int)temp.disksize/8),1,disco);
+
+    int length=(int)temp.disksize;
+
+    if(cant_apagados(mapabits,length)<1)
+    {
+        exit(1);
+    }
+
+    int i, tepos;
+
+    te temp2;
+
+    int pos=existeTag(tag,disco);
+
+    fseek(disco,(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs,0);
+
+    if(pos==-1)
+    {
+        for(i=0; i<(int)temp.tes*tepb; i++)
+        {
+            tepos=ftell(disco);
+
+            fread(&temp2,sizeof(te),1,disco);
+
+            if(strcmp(temp2.tag,"")==0)
+            {
+                int pointer=query(cancion,disco);
+
+                fseek(disco,pointer*bs,0);
+
+                inodo n;
+
+                fread(&n,sizeof(inodo),1,disco);
+
+                int l=strlen(n.tags);
+
+                if(l==0)
+                {
+                    l=250;
+                }
+                else
+                {
+                    l=250-l;
+                }
+
+                if(l<((int)strlen(tag)+1))
+                {
+                    exit(1);
+                }
+
+                strcat(n.tags,tag);                
+                strcat(n.tags,",");
+
+                fseek(disco,pointer*bs,0);
+
+                fwrite(&n,sizeof(inodo),1,disco);
+
+                int a=freeblock(mapabits,length);
+                killblock(mapabits,a,length);
+
+                strcpy(temp2.tag,tag);
+                temp2.pointer=a;
+
+                int arr[256];
+
+                memset(arr,0,bs);
+
+                arr[0]=pointer;//
+
+                fseek(disco,a*bs,0);
+                fwrite(arr,bs,1,disco);
+
+                fseek(disco,tepos,0);
+                fwrite(&temp2,sizeof(te),1,disco);
+
+                break;
+            }
+        }
+    }
+    else
+    {
+        int b=(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs+pos*sizeof(te);
+
+        fseek(disco,b,0);
+
+        fread(&temp2,sizeof(te),1,disco);
+
+        fseek(disco,temp2.pointer*bs,0);
+
+        int arr[256];
+
+        fread(arr,bs,1,disco);
+
+        int i;
+
+        int pointer=query(cancion,disco);//
+
+        for(i=0; i<256; i++)
+        {
+            if(arr[i]==0)
+            {
+                fseek(disco,pointer*bs,0);
+
+                inodo n;
+
+                fread(&n,sizeof(inodo),1,disco);
+
+                int l=strlen(n.tags);
+
+                if(l==0)
+                {
+                    l=250;
+                }
+                else
+                {
+                    l=250-l;
+                }
+
+                if((l<((int)strlen(tag)+1)) && (existeInodo(arr,pointer)!=0))
+                {
+                    exit(1);
+                }
+
+                strcat(n.tags,tag);                
+                strcat(n.tags,",");
+
+                arr[i]=pointer;
+
+                fseek(disco,arr[i]*bs,0);
+
+                fwrite(&n,sizeof(inodo),1,disco);
+
+                break;
+            }
+        }
+
+        fseek(disco,temp2.pointer*bs,0);
+
+        fwrite(arr,bs,1,disco);
+    }
+
+    fseek(disco,bs,0);
+
+    fwrite(mapabits,((int)temp.disksize/8),1,disco);
 
     fclose(disco);
+
+    free(mapabits);
+}
+
+void destaguear(char *cancion,FILE *disco)
+{
+    int ver=existeCancion(cancion,disco);
+
+    if(ver==-1)
+    {
+        exit(1);
+    }
+
+    fseek(disco,0,0);
+
+    header temp;
+
+    fread(&temp,sizeof(header),1,disco);
+
+    int i, tepos;
+
+    fseek(disco,(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs,0);
+
+    te temp2;
+
+    for(i=0; i<(int)temp.tes*tepb; i++)
+    {
+        tepos=ftell(disco);
+
+        fread(&temp2,sizeof(te),1,disco);
+
+        if(strcmp(temp2.tag,"")!=0)
+        {
+            fseek(disco,temp2.pointer*bs,0);
+
+            int arr[256];
+
+            fread(arr,bs,1,disco);
+
+            int pointer=query(cancion,disco);
+
+            if(existeInodo(arr,pointer)==0)
+            {
+                continue;
+            }
+
+            int j;
+
+            for(j=0; j<256; j++)
+            {
+                if(arr[j]==pointer)
+                {
+                    arr[j]=0;
+                }
+            }
+
+            fseek(disco,temp2.pointer*bs,0);
+
+            fwrite(arr,bs,1,disco);
+
+            fseek(disco,tepos+sizeof(te),0);
+        }
+    }
 }
 
 int main(int argc, char *argv[])
@@ -279,6 +608,13 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+        int ver=existeCancion(argv[2],disco);
+
+        if(ver!=-1)
+        {
+            exit(1);
+        }
+
         if((mp3=fopen(argv[2], "rb"))==NULL)
         {
             exit(1);
@@ -292,6 +628,8 @@ int main(int argc, char *argv[])
             exit(1);
             printf("ADD:El archivo %s excede el size establecido",argv[2]);
         }
+
+        fseek(disco,0,0);
 
         header temp;
 
@@ -507,7 +845,13 @@ int main(int argc, char *argv[])
 
         free(mapabits);
 
+        char *tag="archivo";
+
+        putTag(tag,argv[2],argv[3]);
+
         printf("ADD:El archivo %s se ha agregado correctamente",argv[2]);
+
+        //Preeeeeegggggguuuuuuuuunnnnnnnttttaaaaaaaarrrrrrrrrrrrrrr!!!!!!!!!!!!!!!!!!!!!!
     }
     else if(strcmp(argv[1],"-e")==0 && argc==5)
     {
@@ -520,180 +864,180 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
+        int ver=existeCancion(argv[2],disco);
+
+        if(ver==-1)
+        {
+            exit(1);
+        }
+
         if((mp3=fopen(argv[3], "wb"))==NULL)
         {
             exit(1);
         }
 
+        fseek(disco,0,0);
+
         header temp;
 
         fread(&temp,sizeof(header),1,disco);
 
-        fseek(disco,(1+(((int)temp.disksize/8)/bs))*bs,0);
+        fseek(disco,(1+(((int)temp.disksize/8)/bs))*bs+ver*sizeof(fe),0);
 
-        int i;
+        fe temp2;
 
-        for(i=0; i<(int)temp.fes*fepb; i++)
+        fread(&temp2,sizeof(fe),1,disco);
+
+        fseek(disco,temp2.pointer_inodo*bs,0);
+
+        inodo n;
+
+        fread(&n,sizeof(inodo),1,disco);
+
+        int fin;
+
+        if(n.numBloques>=12)
         {
-            fe temp2;
+            fin=12;
+        }
+        else
+        {
+            fin=n.numBloques;
+        }
 
-            fread(&temp2,sizeof(fe),1,disco);
+        int j;
 
-            if(strcmp(temp2.filename,argv[2])==0)
+        for(j=0; j<fin; j++)
+        {
+            fseek(disco,n.pDirecto[j]*bs,0);
+
+            unsigned char bloque[bs];
+
+            if(cont!=((int)n.numBloques-1))
             {
-                fseek(disco,temp2.pointer_inodo*bs,0);
+                fread(bloque,bs,1,disco);
+                fwrite(bloque,bs,1,mp3);
+                cont++;
+            }
+            else
+            {
+                int x=n.size_bytes%bs;
 
-                inodo n;
+                fread(bloque,bs,1,disco);
 
-                fread(&n,sizeof(inodo),1,disco);
+                unsigned char *bloque2=(unsigned char *)malloc(x);
+                memcpy(bloque2,bloque,x);
 
-                int fin;
+                fwrite(bloque2,x,1,mp3);
+                free(bloque2);
+                break;
+            }
+        }
 
-                    if(n.numBloques>=12)
-                    {
-                        fin=12;
-                    }
-                    else
-                    {
-                        fin=n.numBloques;
-                    }
+        fin=0;
 
-                    int j;
+        if(n.numBloques>=256)
+        {
+            fin=256;
+        }
+        else
+        {
+            fin=(n.numBloques-12);
+        }
 
-                    for(j=0; j<fin; j++)
-                    {                        
-                        fseek(disco,n.pDirecto[j]*bs,0);
+        if(fin!=0)
+        {
+            fseek(disco,n.pIndirecto*bs,0);
 
-                        unsigned char bloque[bs];
+            int b[256];
 
-                        if(cont!=((int)n.numBloques-1))
-                        {
-                            fread(bloque,bs,1,disco);
-                            fwrite(bloque,bs,1,mp3);
-                            cont++;
-                        }
-                        else
-                        {
-                            int x=n.size_bytes%bs;
+            fread(b,bs,1,disco);
 
-                            fread(bloque,bs,1,disco);
+            for(j=0; j<fin; j++)
+            {
+                fseek(disco,b[j]*bs,0);
 
-                            unsigned char *bloque2=(unsigned char *)malloc(x);
-                            memcpy(bloque2,bloque,x);
+                unsigned char bloque[bs];
 
-                            fwrite(bloque2,x,1,mp3);
-                            free(bloque2);
-                            break;
-                        }
-                    }
+                if(cont!=((int)n.numBloques-1))
+                {
+                    fread(bloque,bs,1,disco);
+                    fwrite(bloque,bs,1,mp3);
+                    cont++;
+                }
+                else
+                {
+                    int x=n.size_bytes%bs;
+                    fread(bloque,bs,1,disco);
 
-                    if(n.numBloques>=256)
-                    {
-                        fin=256;
-                    }
-                    else
-                    {
-                        fin=(n.numBloques-12);
-                    }
+                    unsigned char *bloque2=(unsigned char *)malloc(x);
+                    memcpy(bloque2,bloque,x);
 
-                    if(fin!=0)
-                    {
-                        fseek(disco,n.pIndirecto*bs,0);
-
-                        int b[256];
-
-                        fread(b,bs,1,disco);
-
-                        for(j=0; j<fin; j++)
-                        {                            
-                            fseek(disco,b[j]*bs,0);
-
-                            unsigned char bloque[bs];
-
-                            if(cont!=((int)n.numBloques-1))
-                            {
-                                fread(bloque,bs,1,disco);
-                                fwrite(bloque,bs,1,mp3);
-                                cont++;
-                            }
-                            else
-                            {
-                                int x=n.size_bytes%bs;
-
-                                fread(bloque,bs,1,disco);
-
-                                unsigned char *bloque2=(unsigned char *)malloc(x);
-                                memcpy(bloque2,bloque,x);
-
-                                fwrite(bloque2,x,1,mp3);
-                                free(bloque2);
-                                break;
-                            }
-                        }
-                    }
-
-                    if((int)n.numBloques>268)
-                    {
-                        int fin_j=((n.numBloques-268)/256);
-                        if((n.numBloques-268)%256!=0)
-                        {
-                            fin_j++;
-                        }
-
-                        int fin_k=256;
-
-                        fseek(disco,n.pIndirectoDoble*bs,0);
-
-                        int b[256];
-
-                        fread(b,bs,1,disco);
-
-                        int k;
-
-                        for(j=0; j<fin_j; j++)
-                        {
-                            if(j==(fin_j-1))
-                            {
-                                fin_k=(n.numBloques-268)%256;
-                            }
-
-                            fseek(disco,b[j]*bs,0);
-
-                            int e[256];
-
-                            fread(e,bs,1,disco);
-
-                            for(k=0; k<fin_k; k++)
-                            {
-                                fseek(disco,e[k]*bs,0);
-
-                                unsigned char bloque[bs];
-
-                                if(cont!=(int)(n.numBloques-1))
-                                {
-                                    fread(bloque,bs,1,disco);
-                                    fwrite(bloque,bs,1,mp3);
-                                    cont++;
-                                }
-                                else
-                                {
-                                    int x=n.size_bytes%bs;
-
-                                    fread(bloque,bs,1,disco);
-
-                                    unsigned char *bloque2=(unsigned char *)malloc(x);
-                                    memcpy(bloque2,bloque,x);
-
-                                    fwrite(bloque2,x,1,mp3);
-                                    free(bloque2);
-                                    break;
-                                }                                
-                            }
-                        }
-                    }
+                    fwrite(bloque2,x,1,mp3);
+                    free(bloque2);
                     break;
                 }
+            }
+        }
 
+        if((int)n.numBloques>268)
+        {
+            int fin_j=((n.numBloques-268)/256);
+            if((n.numBloques-268)%256!=0)
+            {
+                fin_j++;
+            }
+
+            int fin_k=256;
+
+            fseek(disco,n.pIndirectoDoble*bs,0);
+
+            int b[256];
+
+            fread(b,bs,1,disco);
+
+            int k;
+
+            for(j=0; j<fin_j; j++)
+            {
+                if(j==(fin_j-1))
+                {
+                    fin_k=(n.numBloques-268)%256;
+                }
+
+                fseek(disco,b[j]*bs,0);
+
+                int e[256];
+
+                fread(e,bs,1,disco);
+
+                for(k=0; k<fin_k; k++)
+                {
+                    fseek(disco,e[k]*bs,0);
+
+                    unsigned char bloque[bs];
+
+                    if(cont!=(int)(n.numBloques-1))
+                    {
+                        fread(bloque,bs,1,disco);
+                        fwrite(bloque,bs,1,mp3);
+                        cont++;
+                    }
+                    else
+                    {
+                        int x=n.size_bytes%bs;
+
+                        fread(bloque,bs,1,disco);
+
+                        unsigned char *bloque2=(unsigned char *)malloc(x);
+                        memcpy(bloque2,bloque,x);
+
+                        fwrite(bloque2,x,1,mp3);
+                        free(bloque2);
+                        break;
+                    }
+                }
+            }
         }
 
         fclose(disco);
@@ -702,8 +1046,24 @@ int main(int argc, char *argv[])
         printf("EXPORTAR:%s se ha exportado correctamente",argv[2]);
     }
     else if(strcmp(argv[1],"-q")==0 && argc==4)
-    {
-        printf("QUERY:El numero de inodo de %s es %d",argv[2],query(argv[2],argv[3]));
+    {        
+        if((disco=fopen(argv[3], "rb"))==NULL)
+        {
+            exit(1);
+        }
+
+        int pos=query(argv[2],disco);
+
+        if(pos!=-1)
+        {
+            printf("QUERY:El numero de inodo de %s es %d",argv[2],pos);
+        }
+        else
+        {
+            printf("QUERY:No existe numero de inodo para %s",argv[2]);
+        }
+
+        fclose(disco);
     }
     else if(strcmp(argv[1],"-d")==0 && argc==4)
     {
@@ -713,6 +1073,17 @@ int main(int argc, char *argv[])
         {
             exit(1);
         }
+
+        int ver=existeCancion(argv[2],disco);
+
+        if(ver==-1)
+        {
+            exit(1);
+        }
+
+        destaguear(argv[2],disco);
+
+        fseek(disco,0,0);
 
         header temp;
 
@@ -727,157 +1098,144 @@ int main(int argc, char *argv[])
 
         int length=(int)temp.disksize;
 
-        int i;
-
         unsigned char bloque[bs];
         memset(bloque,0,bs);
 
-        for(i=0; i<(int)temp.fes*fepb; i++)
+        fseek(disco,(1+((int)temp.disksize/8)/bs)*bs+ver*sizeof(fe),0);
+
+        fe temp2;
+
+        int fepos=ftell(disco);
+
+        fread(&temp2,sizeof(fe),1,disco);
+
+        killblock(mapabits,temp2.pointer_inodo,length);
+
+        fseek(disco,temp2.pointer_inodo*bs,0);
+
+        inodo n;
+
+        fread(&n,sizeof(inodo),1,disco);
+
+        int j;
+
+        for(j=0; j<12; j++)
         {
-            fe temp2;
-
-            int fepos=ftell(disco);
-
-            fread(&temp2,sizeof(fe),1,disco);
-
-            if(strcmp(temp2.filename,argv[2])==0)
+            if(cont!=(int)n.numBloques)
             {
-                    killblock(mapabits,temp2.pointer_inodo*bs,length);
+                killblock(mapabits,n.pDirecto[j],length);
 
-                    fseek(disco,temp2.pointer_inodo*bs,0);
+                fseek(disco,n.pDirecto[j]*bs,0);
 
-                    inodo n;
+                fwrite(bloque,bs,1,disco);
+                cont++;
+            }
+            else
+            {
+                break;
+            }
+        }
 
-                    fread(&n,sizeof(inodo),1,disco);
+        if(n.numBloques>12)//Primer indirecto simple
+        {
+            killblock(mapabits,n.pIndirecto,length);
 
-                    int j;
+            fseek(disco,n.pIndirecto*bs,0);
 
-                    for(j=0; j<12; j++)
-                    {
-                        if(cont!=((int)n.numBloques-1))
-                        {
-                            killblock(mapabits,n.pDirecto[j],length);
+            int b[256];
 
-                            fseek(disco,n.pDirecto[j]*bs,0);
+            fread(b,bs,1,disco);
 
-                            fwrite(bloque,bs,1,disco);
-                            cont++;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+            for(j=0; j<256; j++)
+            {
+                if(cont!=(int)n.numBloques)
+                {
+                    killblock(mapabits,b[j],length);
 
-                    if(n.numBloques>12)//Primer indirecto simple
-                    {
-                        killblock(mapabits,n.pIndirecto,length);
-
-                        fseek(disco,n.pIndirecto*bs,0);
-
-                        int b[256];
-
-                        fread(b,bs,1,disco);
-
-                        for(j=0; j<256; j++)
-                        {
-                            if(cont!=((int)n.numBloques-1))
-                            {
-                                killblock(mapabits,b[j],length);
-
-                                fseek(disco,b[j]*bs,0);
-
-                                fwrite(bloque,bs,1,disco);
-                                cont++;
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-
-                        fseek(disco,n.pIndirecto*bs,0);
-
-                        fwrite(bloque,bs,1,disco);
-                    }
-
-                    if(n.numBloques>268)//Indirectos dobles
-                    {
-                        killblock(mapabits,n.pIndirectoDoble,length);
-
-                        fseek(disco,n.pIndirectoDoble*bs,0);
-
-                        int b[256];
-
-                        fread(b,bs,1,disco);
-
-                        int k;
-
-                        for(j=0; j<256; j++)
-                        {
-                            if(cont==((int)n.numBloques-1))
-                            {
-                                break;
-                            }
-
-                            killblock(mapabits,b[j],length);
-
-                            fseek(disco,b[j]*bs,0);
-
-                            int e[256];
-
-                            fread(e,bs,1,disco);
-
-                            for(k=0; k<256; k++)
-                            {
-                                if(cont!=((int)n.numBloques-1))
-                                {
-                                    killblock(mapabits,e[k],length);
-
-                                    fseek(disco,e[k]*bs,0);
-
-                                    fwrite(bloque,bs,1,disco);
-                                    cont++;
-                                }
-                                else
-                                {
-                                    break;
-                                }
-                            }
-
-                            fseek(disco,b[j]*bs,0);
-
-                            fwrite(bloque,bs,1,disco);
-                        }
-
-                        fseek(disco,n.pIndirectoDoble*bs,0);
-
-                        fwrite(bloque,bs,1,disco);
-                    }
-
-                    fseek(disco,temp2.pointer_inodo*bs,0);
+                    fseek(disco,b[j]*bs,0);
 
                     fwrite(bloque,bs,1,disco);
-
-                    fseek(disco,fepos,0);
-
-                    strcpy(temp2.filename,"");
-                    temp2.pointer_inodo=-1;
-
-                    fwrite(&temp2,sizeof(fe),1,disco);
-
-                    fseek(disco,bs,0);
-
-                    fwrite(mapabits,((int)temp.disksize/8),1,disco);
-
-                    break;
+                    cont++;
                 }
                 else
                 {
-                    exit(1);
+                    break;
+                }
+            }
+
+            fseek(disco,n.pIndirecto*bs,0);
+
+            fwrite(bloque,bs,1,disco);
+        }
+
+        if(n.numBloques>268)//Indirectos dobles
+        {
+            killblock(mapabits,n.pIndirectoDoble,length);
+
+            fseek(disco,n.pIndirectoDoble*bs,0);
+
+            int b[256];
+
+            fread(b,bs,1,disco);
+
+            int k;
+
+            for(j=0; j<256; j++)
+            {
+                if(cont==((int)n.numBloques-1))
+                {
+                    break;
                 }
 
+                killblock(mapabits,b[j],length);
+
+                fseek(disco,b[j]*bs,0);
+
+                int e[256];
+
+                fread(e,bs,1,disco);
+
+                for(k=0; k<256; k++)
+                {
+                    if(cont!=(int)n.numBloques)
+                    {
+                        killblock(mapabits,e[k],length);
+
+                        fseek(disco,e[k]*bs,0);
+
+                        fwrite(bloque,bs,1,disco);
+                        cont++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                fseek(disco,b[j]*bs,0);
+
+                fwrite(bloque,bs,1,disco);
+            }
+
+            fseek(disco,n.pIndirectoDoble*bs,0);
+
+            fwrite(bloque,bs,1,disco);
         }
+
+        fseek(disco,temp2.pointer_inodo*bs,0);
+
+        fwrite(bloque,bs,1,disco);
+
+        fseek(disco,fepos,0);
+
+        strcpy(temp2.filename,"");
+        temp2.pointer_inodo=-1;
+
+        fwrite(&temp2,sizeof(fe),1,disco);
+
+        fseek(disco,bs,0);
+
+        fwrite(mapabits,((int)temp.disksize/8),1,disco);
 
         fclose(disco);
 
@@ -887,21 +1245,22 @@ int main(int argc, char *argv[])
     }
     else if(strcmp(argv[1],"-t")==0 && argc==5)
     {
+        putTag(argv[2],argv[3],argv[4]);
 
+        printf("TAG:El archivo %s ha sido taggeado con %s",argv[3],argv[2]);
     }
     else if(strcmp(argv[1],"-it")==0 && argc==4)
-    {
+    {        
+        if((disco=fopen(argv[3], "rb"))==NULL)
+        {
+            exit(1);
+        }
 
+        printf("TAGSCANCION:");
+
+        verTags(argv[2],disco);
     }
     else if(strcmp(argv[1],"-s")==0 && argc==4)
-    {
-
-    }
-    else if(strcmp(argv[1],"-qi")==0 && argc==4)
-    {
-        queryinodo(atoi(argv[2]),argv[3]);
-    }
-    else if(strcmp(argv[1],"-qa")==0 && argc==4)
     {
         if((disco=fopen(argv[3], "rb"))==NULL)
         {
@@ -912,19 +1271,143 @@ int main(int argc, char *argv[])
 
         fread(&temp,sizeof(header),1,disco);
 
-        int pos=(1+(((int)temp.disksize/8)/bs))*bs;
+        te temp2;
 
-        fseek(disco,pos,0);
+        int pos=existeTag(argv[2],disco);
 
-        int pointer_inodo=query(argv[2],argv[3]);
+        printf("SEARCHTAG:");
 
-        printf("QUERYFILE:$");
+        if(pos!=-1)
+        {
+            fseek(disco,(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs+pos*sizeof(te),0);
 
-        queryinodo(pointer_inodo,argv[3]);
+            fread(&temp2,sizeof(te),1,disco);
+
+            fseek(disco,temp2.pointer*bs,0);
+
+            int arr[256];
+
+            fread(arr,bs,1,disco);
+
+            int j;
+
+            for(j=0; j<256; j++)
+            {
+                if(arr[j]!=0)
+                {
+                    printf("%d,",arr[j]*bs);
+                }
+            }
+        }
+        else
+        {
+            exit(1);
+        }
+
+        fclose(disco);
+    }
+    else if(strcmp(argv[1],"-qi")==0 && argc==4)
+    {
+        if((disco=fopen(argv[3],"rb"))==NULL)
+        {
+            exit(1);
+        }
+
+        queryinodo(atoi(argv[2]),disco);
+
+        fclose(disco);
+    }
+    else if(strcmp(argv[1],"-qa")==0 && argc==4)
+    {
+        if((disco=fopen(argv[3], "rb"))==NULL)
+        {
+            exit(1);
+        }
+
+        int pointer_inodo=query(argv[2],disco);
+
+        if(pointer_inodo!=-1)
+        {
+            printf("QUERYFILE:$");
+            queryinodo(pointer_inodo*bs,disco);
+        }
+        else
+        {
+            printf("QUERYFILE:No existe numero de inodo para %s",argv[2]);
+        }
+
+        fclose(disco);
     }
     else if(strcmp(argv[1],"-l")==0 && argc==3)
     {
+        if((disco=fopen(argv[2], "rb"))==NULL)
+        {
+            exit(1);
+        }
 
+        header temp;
+
+        fread(&temp,sizeof(header),1,disco);
+
+        fseek(disco,(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs,0);
+
+        int i;
+
+        int cont=0;
+
+        te temp2;
+
+        printf("LISTARTAGS:");
+
+        for(i=0; i<(int)temp.tes*tepb; i++)
+        {
+            fread(&temp2,sizeof(te),1,disco);
+
+            if(strcmp(temp2.tag,"")!=0)
+            {
+                cont++;
+            }
+        }
+
+        fseek(disco,(1+((int)temp.disksize/8)/bs+(int)temp.fes)*bs,0);
+
+        char *arr[cont];
+
+        cont=0;
+
+        for(i=0; i<(int)temp.tes*tepb; i++)
+        {
+            fread(&temp2,sizeof(te),1,disco);
+
+            if(strcmp(temp2.tag,"")!=0)
+            {
+                arr[cont]=temp2.tag;
+
+                cont++;
+            }
+        }
+
+        int j;
+
+        for(i=0; i<cont-1; i++)
+        {
+            for(j=i+1; j<cont; j++)
+            {
+                if(strcmp(arr[i],arr[j])>0)
+                {
+                    char *temp=arr[i];
+                    arr[i] = arr[j];
+                    arr[j] = temp;
+                }
+            }
+        }
+
+        for(i=0; i<cont; i++)
+        {
+            printf("%s,",arr[i]);
+        }
+
+        fclose(disco);
     }
     else
     {
