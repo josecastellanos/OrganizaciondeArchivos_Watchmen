@@ -552,7 +552,7 @@ void main(int argc, char *argv[])
 
         if(dsize%8!=0)
         {
-            dsize+=dsize%8;
+            dsize+=8-dsize%8;
         }
 
         temp.disksize=dsize;
