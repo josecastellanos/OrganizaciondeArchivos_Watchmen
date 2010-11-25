@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>mfs</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="recursos.qrc">
+    <normaloff>:/images/logo.png</normaloff>:/images/logo.png</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow
+{
+background-image: url(:/images/fondo.png);
+}</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QListWidget" name="lwTags">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>200</width>
+      <height>601</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="lwSongs">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>80</y>
+      <width>641</width>
+      <height>321</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>240</x>
+      <y>420</y>
+      <width>421</width>
+      <height>200</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QGroupBox
+{
+	background-image: url(:/images/info2.png);
+     border-style: outset;
+     border-width: 1px;
+     border-radius: 20px;
+     border-color: white;
+     font: bold 12px;
+     min-width:4m;
+     padding: 6px;
+}
+</string>
+    </property>
+    <property name="title">
+     <string>GroupBox</string>
+    </property>
+    <widget class="QLabel" name="InfoCancion">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>421</width>
+       <height>200</height>
+      </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>679</x>
+      <y>420</y>
+      <width>201</width>
+      <height>200</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">QLabel
+{
+	background-image: url(:/images/logo.png);
+}</string>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>900</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuNew_Disk">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Disk"/>
+    <addaction name="actionAdd_Song"/>
+    <addaction name="actionExport_Song"/>
+    <addaction name="actionTag_Song"/>
+    <addaction name="actionDelete_Song"/>
+    <addaction name="actionOpen_Disk"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionSet_exe"/>
+    <addaction name="actionShow_Tags"/>
+   </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>About</string>
+    </property>
+    <addaction name="actionAbout_mfs"/>
+   </widget>
+   <addaction name="menuNew_Disk"/>
+   <addaction name="menuTools"/>
+   <addaction name="menuAbout"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionNew_Disk">
+   <property name="text">
+    <string>New Disk</string>
+   </property>
+  </action>
+  <action name="actionAdd_Song">
+   <property name="text">
+    <string>Add Song</string>
+   </property>
+  </action>
+  <action name="actionExport_Song">
+   <property name="text">
+    <string>Export Song</string>
+   </property>
+  </action>
+  <action name="actionDelete_Song">
+   <property name="text">
+    <string>Delete Song</string>
+   </property>
+  </action>
+  <action name="actionOpen_Disk">
+   <property name="text">
+    <string>Open Disk</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionSet_exe">
+   <property name="text">
+    <string>Set .exe</string>
+   </property>
+  </action>
+  <action name="actionShow_Tags">
+   <property name="text">
+    <string>Show Tags</string>
+   </property>
+  </action>
+  <action name="actionTag_Song">
+   <property name="text">
+    <string>Tag Song</string>
+   </property>
+  </action>
+  <action name="actionAbout_mfs">
+   <property name="text">
+    <string>About mfs</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources>
+  <include location="recursos.qrc"/>
+ </resources>
+ <connections/>
+</ui>
