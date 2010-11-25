@@ -16,13 +16,15 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp \
-    data_alumno.cpp \
     avl.cpp \
     mapabits.cpp \
-    avllist.cpp
+    avllist.cpp \
+    data.cpp \
+    btree.cpp
 
 HEADERS += \
-    data_alumno.h \
     avl.h \
     mapabits.h \
-    avllist.h
+    avllist.h \
+    data.h \
+    btree.h

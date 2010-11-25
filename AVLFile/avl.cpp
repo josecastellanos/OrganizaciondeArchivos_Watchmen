@@ -179,6 +179,9 @@ void avl::add(int cuenta, int rrn)
         else
         {
             lista->add(rrn,temp.cuantos,temp.inicio,temp.final);
+
+            disco.seekp(temp.pos*bs,ios_base::beg);
+            disco.write((const char *)&temp,sizeof(nodo_avl));
         }
     }
 
@@ -213,7 +216,7 @@ void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
             temp2.padre=pos;
             temp2.pos=i;
 
-            lista->add(rrn,temp2.cuantos,temp.inicio,temp.final);
+            lista->add(rrn,temp2.cuantos,temp2.inicio,temp2.final);
 
             disco->seekp(i*bs,ios_base::beg);
             disco->write((const char *)&temp2,sizeof(nodo_avl));
@@ -223,7 +226,7 @@ void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
         }
         else
         {
-            addRecursiva(disco,i,temp.hijoIzq,cuenta,0);
+            addRecursiva(disco,i,temp.hijoIzq,cuenta,rrn);
         }
     }
     else if(cuenta>temp.keyCuenta)
@@ -237,7 +240,7 @@ void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
             temp2.padre=pos;
             temp2.pos=i;
 
-            lista->add(rrn,temp2.cuantos,temp.inicio,temp.final);
+            lista->add(rrn,temp2.cuantos,temp2.inicio,temp2.final);
 
             disco->seekp(i*bs,ios_base::beg);
             disco->write((const char *)&temp2,sizeof(nodo_avl));

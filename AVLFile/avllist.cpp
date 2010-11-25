@@ -22,42 +22,42 @@ void avlList::create(int cuantos)
 {
     disco.open(name,ios::binary | ios::in | ios::out);
 
-        if(cuantos%160!=0)
-        {
-            cuantos+=160-cuantos%160;
-        }
+    if(cuantos%160!=0)
+    {
+        cuantos+=160-cuantos%160;
+    }
 
-        unsigned char bloque[bsize];
-        memset(bloque,0,bsize);
+    unsigned char bloque[bsize];
+    memset(bloque,0,bsize);
 
-        disco.seekp(0,ios_base::beg);
-        disco.write((char *)bloque,bsize);
+    disco.seekp(0,ios_base::beg);
+    disco.write((char *)bloque,bsize);
 
-        disco.seekp(0,ios_base::beg);
-        disco.write((char *)&cuantos,sizeof(int));
+    disco.seekp(0,ios_base::beg);
+    disco.write((char *)&cuantos,sizeof(int));
 
-        unsigned char *mapabits;
-        mapabits = (unsigned char *)malloc(cuantos/8);
-        memset(mapabits,0,cuantos/8);
+    unsigned char *mapabits;
+    mapabits = (unsigned char *)malloc(cuantos/8);
+    memset(mapabits,0,cuantos/8);
 
-        int fin=1+(cuantos/8)/bsize;
+    int fin=1+(cuantos/8)/bsize;
 
-        for(int i=0; i<fin; i++)
-        {
-            int casilla = i / 8 ;
-            mapabits[casilla] = mapabits[casilla] | (1 << (7-i%8));
-        }
+    for(int i=0; i<fin; i++)
+    {
+        int casilla = i / 8 ;
+        mapabits[casilla] = mapabits[casilla] | (1 << (7-i%8));
+    }
 
-        disco.seekp(bsize,ios_base::beg);
-        disco.write((const char *)mapabits,cuantos/8);
+    disco.seekp(bsize,ios_base::beg);
+    disco.write((const char *)mapabits,cuantos/8);
 
-        for(int i=0; i<cuantos; i++)
-        {
-            disco.write((const char*)bloque,bsize);
-            disco.flush();
-        }
+    for(int i=0; i<cuantos; i++)
+    {
+        disco.write((const char*)bloque,bsize);
+        disco.flush();
+    }
 
-        disco.close();
+    disco.close();
 }
 
 void avlList::add(int rrn, int &cont, int &raiz, int &tail)
@@ -71,20 +71,20 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
 
     mapabits map;
 
-    unsigned char *mapabits;
-    mapabits = (unsigned char *)malloc(cuantos/8);
-    memset(mapabits,0,cuantos/8);
+    unsigned char *mapa;
+    mapa = (unsigned char *)malloc(cuantos/8);
+    memset(mapa,0,cuantos/8);
 
     disco.seekg(bsize,ios_base::beg);
-    disco.read((char *)mapabits,cuantos/8);
+    disco.read((char *)mapa,cuantos/8);
 
-    if(map.cant_apagados(mapabits,cuantos)==0 || exists(rrn,raiz))
+    if(map.cant_apagados(mapa,cuantos)==0 || exists(rrn,raiz))
     {
         return;
     }
 
-    int pos=map.freeblock(mapabits,cuantos);
-    map.killblock(mapabits,pos,cuantos);
+    int pos=map.freeblock(mapa,cuantos);
+    map.killblock(mapa,pos,cuantos);
 
     nodo temp;
 
@@ -107,6 +107,9 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
 
         a.siguiente=pos;
 
+        disco.seekp(tail*bsize,ios_base::beg);
+        disco.write((const char *)&a,sizeof(nodo));
+
         temp.siguiente=-1;
         tail=pos;
     }
@@ -117,7 +120,9 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
     disco.write((const char *)&temp,sizeof(nodo));
 
     disco.seekp(bsize,ios_base::beg);
-    disco.write((const char *)mapabits,cuantos/8);
+    disco.write((const char *)mapa,cuantos/8);
+
+    free(mapa);
 
     disco.close();
 }
@@ -126,7 +131,7 @@ void avlList::mostrar()
 {
     disco.open(name,ios::binary | ios::in | ios::out);
 
-    cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
+    cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
 
     int cuantos;
 
@@ -270,12 +275,12 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
 
     mapabits map;
 
-    unsigned char *mapabits;
-    mapabits = (unsigned char *)malloc(cuantos/8);
-    memset(mapabits,0,cuantos/8);
+    unsigned char *mapa;
+    mapa = (unsigned char *)malloc(cuantos/8);
+    memset(mapa,0,cuantos/8);
 
     disco.seekg(bsize,ios_base::beg);
-    disco.read((char *)mapabits,cuantos/8);
+    disco.read((char *)mapa,cuantos/8);
 
     if(pos<cuantos)
     {
@@ -300,7 +305,7 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
                     disco.seekg(raiz*bsize, ios_base::beg);
                     disco.read((char *)&a, sizeof(nodo));
 
-                    map.killblock(mapabits,a.pos,cuantos);
+                    map.killblock(mapa,a.pos,cuantos);
 
                     raiz=-1;
                     tail=-1;
@@ -312,7 +317,7 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
                     disco.seekg(raiz*bsize, ios_base::beg);
                     disco.read((char *)&a, sizeof(nodo));
 
-                    map.killblock(mapabits,a.pos,cuantos);
+                    map.killblock(mapa,a.pos,cuantos);
 
                     nodo b;
 
@@ -328,7 +333,7 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
                 }
                 else if(pos>0 && pos<(cont-1))
                 {
-                    map.killblock(mapabits,temp.pos,cuantos);
+                    map.killblock(mapa,temp.pos,cuantos);
 
                     nodo a;
 
@@ -352,7 +357,7 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
                 }
                 else
                 {
-                    map.killblock(mapabits,temp.pos,cuantos);
+                    map.killblock(mapa,temp.pos,cuantos);
 
                     tail=s;
 
@@ -372,7 +377,7 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
     }
 
     disco.seekp(bsize,ios_base::beg);
-    disco.write((const char *)mapabits,cuantos/8);
+    disco.write((const char *)mapa,cuantos/8);
 
     disco.close();
 }
