@@ -16,11 +16,13 @@ class nodo
     public:
         nodo()
         {
-            rrn=0;
+            id=0;
+            rrn=-1;
             siguiente=-1;
             anterior=-1;
             pos=-1;
         }
+        long id;
         int rrn;
         int pos;
         int siguiente;
@@ -32,10 +34,10 @@ class avlList
     public:
         avlList(char *_name);
         void create(int cuantos);
-        void add(int rrn, int &cont, int &raiz, int &tail);
+        void add(long id, int rrn, int &cont, int &raiz, int &tail);
         nodo at(int pos, int &cont, int &raiz);
-        void deleteRrn(int rrn, int &cont, int &raiz, int &tail);
-        bool exists(int rrn, int &raiz);
+        void deleteRrn(int pos, int &cont, int &raiz, int &tail);
+        bool exists(long id, int &raiz);
         void mostrar();
     private:
         char *name;

@@ -9,7 +9,7 @@
 
 using namespace std;
 
-const int bs=48;
+const int bs=52;
 
 class header
 {
@@ -30,7 +30,7 @@ class nodo_avl
     public:
         nodo_avl()
         {
-            keyCuenta=0;
+            strcpy(source,"");
             hijoIzq=-1;
             hijoDer=-1;
             padre=-1;
@@ -41,7 +41,7 @@ class nodo_avl
             final=-1;
             cuantos=0;
         }
-        int keyCuenta;
+        char source[15];
         int inicio;
         int final;
         int cuantos;
@@ -58,20 +58,20 @@ class avl
     public:
         avl(char *_name);
         void create(int cuantos);
-        void add(int cuenta, int rrn);
-        nodo_avl search(int cuenta);
+        void add(char *source, long id, int rrn);
+        nodo_avl search(char *source);
         void mostrar();
-        avlList *lista;
-private:
-        void addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn);
-        nodo_avl searchRecursiva(int n, int cuenta);
+
+    private:
+        void addRecursiva(fstream *disco, int i, int pos, char *source, long id, int rrn);
+        nodo_avl searchRecursiva(int n, char *source);
         void postOrdenAltura(int n);
         int altura(int pos);
         int updateAltura(fstream *disco, int pos);
         int max(int i, int j);
         void preOrdenFE(int n);
         void updateFE(nodo_avl *temp, int hi, int hd);
-        bool esBalanceado(int cuenta);
+        bool esBalanceado(int pos);
         void balancear(int pos);
         void RSI(int n);
         void RSD(int n);
@@ -82,7 +82,8 @@ private:
         nodo_avl getMayor(int n);
         nodo_avl getMenor(int n);
         fstream disco;
-        char *name;
+        char *name;        
+        avlList *lista;
 };
 
 #endif // AVL_H

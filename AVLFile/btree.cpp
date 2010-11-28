@@ -69,7 +69,7 @@ void btree::create(int cuantos)
     disco.close();
 }
 
-void btree::add(int id, int rrn)
+void btree::add(long id, int rrn)
 {
     disco.open(name,ios_base::binary | ios_base::in | ios_base::out);
 
@@ -113,22 +113,41 @@ void btree::add(int id, int rrn)
     }
     else
     {
-        bool ver=false;
         entry promo;
         int newp;
 
         if(searchRecursivo(h.raiz,id).id==-1)
         {
-            addRecursiva(mapabits, h.total, h.raiz, id, rrn, ver, promo, newp);
+            if(addRecursiva(mapabits,h.total,h.raiz,id,rrn,promo,newp)==1)
+            {
+                int c=map.freeblock(mapabits,h.total);
+                map.killblock(mapabits,c,h.total);
+
+                nodoB tempp;
+
+                tempp.llavesPrimarias[0].id=promo.id;
+                tempp.llavesPrimarias[0].rrn=promo.rrn;
+
+                tempp.apuntadores[0]=h.raiz;
+                tempp.apuntadores[1]=newp;
+
+                tempp.cuantos=1;
+
+                h.raiz=c;
+
+                disco.seekp(c*blocksize, ios_base::beg);
+                disco.write((const char *)&tempp, sizeof(nodoB));
+            }
+        }
+        else
+        {
+            return;
         }
         //si existe agregarlo(Falta Funca Agregar), si no Return;
         // el Search Me gusto este mira http://cs-netlab-01.lynchburg.edu/courses/DataStII/BTreeOps.htm
     }
 
     // si llego aqui se agrego
-    disco.seekg(0,ios_base::beg);
-    disco.read((char*)&h,sizeof(header));
-
     h.cuantos++;
 
     // termino Escribamos header y mB
@@ -141,53 +160,22 @@ void btree::add(int id, int rrn)
     disco.close();
 }
 
-void btree::addRecursiva(unsigned char *m, int cuantos, int pos, int id, int rrn, bool &ver, entry &promo, int &newp)
+int btree::addRecursiva(unsigned char *m, int cuantos, int pos, long id, int rrn, entry &promo, int &newp)
 {
+    int i;
     nodoB temp;
 
-    disco.seekg(pos*blocksize, ios_base::beg);
-    disco.read((char *)&temp, sizeof(nodoB));
-
-    if(temp.cuantos < maxLlaves)
+    if(pos==-1)
     {
-        if(ver==true)
-        {            
-            int i;
-
-            for(i=0; i<temp.cuantos; i++)
-            {
-                if(id < temp.llavesPrimarias[i].id)
-                {
-                    break;
-                }
-            }
-
-            for(int j=(temp.cuantos-1); j>=i; j--)
-            {
-                temp.llavesPrimarias[j+1].id=temp.llavesPrimarias[j].id;
-                temp.llavesPrimarias[j+1].rrn=temp.llavesPrimarias[j+1].rrn;
-                temp.apuntadores[j+2]=temp.apuntadores[j+1];
-            }
-
-            temp.llavesPrimarias[i].id=id;
-            temp.llavesPrimarias[i].rrn=rrn;
-            temp.apuntadores[i+1]=newp;
-        }
-        else
-        {
-            temp.llavesPrimarias[temp.cuantos].id=id;
-            temp.llavesPrimarias[temp.cuantos].rrn=rrn;
-
-            sort(temp.llavesPrimarias,temp.cuantos);
-        }
-
-        temp.cuantos++;
-
-        ver=false;
+        promo.id=id;
+        promo.rrn=rrn;
+        newp=-1;
+        return 1;
     }
-    else if(temp.cuantos==maxLlaves)
+    else
     {
-        int i;
+        disco.seekg(pos*blocksize, ios_base::beg);
+        disco.read((char *)&temp, sizeof(nodoB));
 
         for(i=0; i<temp.cuantos; i++)
         {
@@ -197,161 +185,147 @@ void btree::addRecursiva(unsigned char *m, int cuantos, int pos, int id, int rrn
             }
         }
 
-        int j=(temp.cuantos+1)/2;
-
-        int x;
-
-        entry arr[maxLlaves+1];
-
-        for(int y=0; y<maxApuntadores ; y++)
+        if(id < temp.llavesPrimarias[i-1].id)
         {
-            if(y==i)
-                continue;
-
-            arr[y].id = temp.llavesPrimarias[y].id;
-            arr[y].rrn = temp.llavesPrimarias[y].rrn;
+            i--;
         }
+    }
 
-        arr[i].id=id;
-        arr[i].rrn=rrn;
+    entry e;
+    int pright;
 
-        entry e=arr[j];
+    int r=addRecursiva(m,cuantos,temp.apuntadores[i],id,rrn,e,pright);
 
-        entry *a=temp.llavesPrimarias;
-        int *b=temp.apuntadores;
+    if(r==0)
+    {
+        return r;
+    }
+    else if(temp.cuantos < maxLlaves)
+    {
+        int n;
 
-        clear(temp.llavesPrimarias, temp.apuntadores);
-
-        for(x=0; x<j; x++)
+        for(n=0; n<temp.cuantos; n++)
         {
-            temp.llavesPrimarias[x].id=arr[x].id;
-            temp.llavesPrimarias[x].rrn=arr[x].rrn;
-
-            for(int y=0; y<maxLlaves; y++)
+            if(e.id < temp.llavesPrimarias[n].id)
             {
-                if(a[y].id==arr[x].id)
-                {
-                    if(y==0 && x==0)
-                    {
-                        temp.apuntadores[y]=b[y];
-                    }
-                    temp.apuntadores[y+1]=b[y+1];
-
-                    break;
-                }
+                break;
             }
         }
 
-        temp.cuantos=j;
-
-        mapabits map;
-
-        int d=map.freeblock(m,cuantos);
-        map.killblock(m,d,cuantos);
-
-        header h;
-
-        disco.seekg(0,ios_base::beg);
-        disco.read((char*)&h,sizeof(header));
-
-        if(h.raiz==pos)
+        for(int j=(temp.cuantos-1); j>=n; j--)
         {
-            int c=map.freeblock(m,cuantos);
-            map.killblock(m,c,cuantos);
-
-            h.raiz=c;
-
-            addRecursiva(m,cuantos,c,e.id,e.rrn,ver,promo,newp);
-
-            nodoB tempp;
-
-            disco.seekg(c*blocksize, ios_base::beg);
-            disco.read((char *)&tempp, sizeof(nodoB));
-
-            tempp.apuntadores[0]=pos;
-            tempp.apuntadores[1]=d;
-
-            disco.seekp(0, ios_base::beg);
-            disco.write((const char *)&h, sizeof(header));
-
-            disco.seekp(c*blocksize, ios_base::beg);
-            disco.write((const char *)&tempp, sizeof(nodoB));
+            temp.llavesPrimarias[j+1].id=temp.llavesPrimarias[j].id;
+            temp.llavesPrimarias[j+1].rrn=temp.llavesPrimarias[j].rrn;
+            temp.apuntadores[j+2]=temp.apuntadores[j+1];
         }
 
-        for(x=j+1; x<=maxLlaves; x++)
-        {
-            addRecursiva(m,cuantos,d,arr[x].id,arr[x].rrn,ver,promo,newp);
-        }
+        temp.llavesPrimarias[n].id=e.id;
+        temp.llavesPrimarias[n].rrn=e.rrn;
+        temp.apuntadores[i+1]=pright;
 
-        promo=e;
-        newp=d;
+        temp.cuantos++;
 
-        ver=true;
+        disco.seekp(pos*blocksize, ios_base::beg);
+        disco.write((const char *)&temp, sizeof(nodoB));
+
+        return 0;
     }
     else
     {
-        int k = 0 ;
+        nodoB newtemp;
 
-        while(k < temp.cuantos && id > temp.llavesPrimarias[k].id)
+        split(m,cuantos,e,pright,temp,promo,newp,newtemp);
+
+        disco.seekp(pos*blocksize, ios_base::beg);
+        disco.write((const char *)&temp, sizeof(nodoB));
+
+        disco.seekp(newp*blocksize, ios_base::beg);
+        disco.write((const char *)&newtemp, sizeof(nodoB));
+
+        return 1;
+    }
+}
+
+void btree::split(unsigned char *m, int cuantos, entry key, int rrn, nodoB &temp, entry &promo, int &newp, nodoB &newtemp)
+{
+    int i;
+
+    for(i=0; i<temp.cuantos; i++)
+    {
+        if(key.id < temp.llavesPrimarias[i].id)
         {
-            k++;
-        }
-
-        if(id > temp.llavesPrimarias[k-1].id)
-        {
-            k--;
-        }
-
-        if(id < temp.llavesPrimarias[k].id)
-        {
-            if(temp.apuntadores[k]!=-1)
-            {
-                addRecursiva(m,cuantos,temp.apuntadores[k],id,rrn,ver,promo,newp);
-            }
-            else
-            {
-                mapabits map;
-
-                int i=map.freeblock(m,cuantos);
-                map.killblock(m,i,cuantos);
-
-                temp.apuntadores[k]=i;
-
-                addRecursiva(m,cuantos,i,id,rrn,ver,promo,newp);
-            }
-
-            if(ver==true)
-            {
-                addRecursiva(m,cuantos,pos,promo.id,promo.rrn,ver,promo,newp);
-            }
-        }
-        else if(id > temp.llavesPrimarias[k].id)
-        {
-            if(temp.apuntadores[k+1]!=-1)
-            {
-                addRecursiva(m,cuantos,temp.apuntadores[k+1],id,rrn,ver,promo,newp);
-            }
-            else
-            {
-                mapabits map;
-
-                int i=map.freeblock(m,cuantos);
-                map.killblock(m,i,cuantos);
-
-                temp.apuntadores[k+1]=i;
-
-                addRecursiva(m,cuantos,i,id,rrn,ver,promo,newp);
-            }
-
-            if(ver==true)
-            {
-                addRecursiva(m,cuantos,pos,promo.id,promo.rrn,ver,promo,newp);
-            }
+            break;
         }
     }
 
-    disco.seekp(pos*blocksize, ios_base::beg);
-    disco.write((const char *)&temp, sizeof(nodoB));
+    int j=(temp.cuantos+1)/2;
+
+    int x;
+
+    entry arr[maxLlaves+1];
+    int ap[maxApuntadores+1];
+
+    for(int y=0; y<i; y++)
+    {
+        arr[y].id = temp.llavesPrimarias[y].id;
+        arr[y].rrn = temp.llavesPrimarias[y].rrn;
+
+        ap[y]=temp.apuntadores[y];
+    }
+
+    ap[i]=temp.apuntadores[i];
+
+    for(int y=i; y<maxLlaves; y++)
+    {
+        arr[y+1].id = temp.llavesPrimarias[y].id;
+        arr[y+1].rrn = temp.llavesPrimarias[y].rrn;
+
+        ap[y+2]=temp.apuntadores[y+1];
+    }
+
+    arr[i].id=key.id;
+    arr[i].rrn=key.rrn;
+    ap[i+1]=rrn;
+
+    promo.id=arr[j].id;
+    promo.rrn=arr[j].rrn;
+
+    mapabits map;
+
+    int d=map.freeblock(m,cuantos);
+    map.killblock(m,d,cuantos);
+
+    newp=d;
+
+    clear(temp.llavesPrimarias, temp.apuntadores);
+
+    for(x=0; x<j; x++)
+    {
+        temp.llavesPrimarias[x].id=arr[x].id;
+        temp.llavesPrimarias[x].rrn=arr[x].rrn;
+
+        temp.apuntadores[x]=ap[x];
+    }
+
+    temp.apuntadores[j]=ap[j];
+
+    temp.cuantos=j;
+
+    int k=0;
+
+    for(x=j+1; x<=maxLlaves; x++)
+    {
+        newtemp.llavesPrimarias[k].id=arr[x].id;
+        newtemp.llavesPrimarias[k].rrn=arr[x].rrn;
+
+        newtemp.apuntadores[k]=ap[x];
+
+        k++;
+    }
+
+    newtemp.apuntadores[k]=ap[maxApuntadores];
+
+    newtemp.cuantos=k;
 }
 
 //void btree::split2(nodoB &temp, unsigned char *m, int cuantos, entry &e, int &ap)
@@ -474,6 +448,20 @@ void btree::addRecursiva(unsigned char *m, int cuantos, int pos, int id, int rrn
 //    }
 //}
 
+void btree::prueba()
+{
+    disco.open(name,ios_base::binary | ios_base::in | ios_base::out);
+
+    header h;
+
+    disco.seekg(0,ios_base::beg);
+    disco.read((char*)&h,sizeof(header));
+
+    searchRecursivo(h.raiz,8);
+
+    disco.close();
+}
+
 void btree::mostrar()
 {
     disco.open(name,ios::binary | ios::in | ios::out);
@@ -491,6 +479,8 @@ void btree::mostrar()
 
     for(int i=0; i<25; i++)
     {
+        cout<<"Pos: "<<base+i<<endl;
+
         disco.seekg((base+i)*blocksize, ios_base::beg);
         disco.read((char *)&temp, sizeof(nodoB));
 
@@ -503,7 +493,7 @@ void btree::mostrar()
         }
 
 
-        for(j=0; j<maxLlaves; j++)
+        for(j=0; j<maxApuntadores; j++)
         {
             cout<<"Apuntadores["<<j<<"]: "<<temp.apuntadores[j]<<endl;
         }
@@ -545,7 +535,7 @@ void btree::sort(entry *arr, int fin)
     }
 }
 
-entry btree::searchRecursivo(int pos, int id)
+entry btree::searchRecursivo(int pos, long id)
 {
     nodoB temp;
 
@@ -567,9 +557,9 @@ entry btree::searchRecursivo(int pos, int id)
         i++;
     }
 
-    if(id > temp.llavesPrimarias[i].id)
+    if(id < temp.llavesPrimarias[i-1].id)
     {
-        i++;
+        i--;
     }
 
     if(temp.apuntadores[i]!=-1)

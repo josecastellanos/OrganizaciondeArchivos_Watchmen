@@ -2,6 +2,8 @@
 
 avl::avl(char *_name)
 {
+    cout<<sizeof(nodo_avl);
+
     disco.open(_name,ios::binary | ios::in);
     if(!disco)
     {        /*
@@ -43,7 +45,7 @@ void avl::mostrar()
         disco.seekg(i*bs,ios_base::beg);
         disco.read((char *)&n,sizeof(nodo_avl));
 
-        cout<<"Cuenta: "<<n.keyCuenta<<endl;
+        cout<<"Source: "<<n.source<<endl;
         cout<<"HijoIzq: "<<n.hijoIzq<<endl;
         cout<<"HijoDer: "<<n.hijoDer<<endl;
         cout<<"Altura: "<<n.altura<<endl;
@@ -64,9 +66,9 @@ void avl::create(int cuantos)
 
         header h;
 
-        if(cuantos%384!=0)
+        if(cuantos%416!=0)
         {
-            cuantos+=384-cuantos%384;
+            cuantos+=416-cuantos%416;
         }
 
         h.total=cuantos;
@@ -113,7 +115,7 @@ void avl::create(int cuantos)
     //}
 }
 
-void avl::add(int cuenta, int rrn)
+void avl::add(char *source, long id, int rrn)
 {/*
     if(!validoEscribir)
     {
@@ -151,12 +153,12 @@ void avl::add(int cuenta, int rrn)
         nodo_avl temp;
 
         h.raiz=pos;
-        temp.keyCuenta=cuenta;
+        strcpy(temp.source,source);
         temp.FE=0;//Preguntar
         temp.altura=0;//Preguntar
         temp.pos=pos;
 
-        lista->add(rrn,temp.cuantos,temp.inicio,temp.final);
+        lista->add(id,rrn,temp.cuantos,temp.inicio,temp.final);
 
         disco.seekp(pos*bs,ios_base::beg);
         disco.write((const char *)&temp,sizeof(nodo_avl));
@@ -165,20 +167,20 @@ void avl::add(int cuenta, int rrn)
     }
     else
     {
-        nodo_avl temp=search(cuenta);
+        nodo_avl temp=search(source);
 
         if(temp.pos==-1)
         {            
             pos=map.freeblock(mapabits,h.total);
             map.killblock(mapabits,pos,h.total);
 
-            addRecursiva(&disco,pos,h.raiz,cuenta,rrn);
+            addRecursiva(&disco,pos,h.raiz,source,id,rrn);
 
             h.cuantos++;
         }
         else
         {
-            lista->add(rrn,temp.cuantos,temp.inicio,temp.final);
+            lista->add(id,rrn,temp.cuantos,temp.inicio,temp.final);
 
             disco.seekp(temp.pos*bs,ios_base::beg);
             disco.write((const char *)&temp,sizeof(nodo_avl));
@@ -198,25 +200,25 @@ void avl::add(int cuenta, int rrn)
     disco.close();
 }
 
-void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
+void avl::addRecursiva(fstream *disco, int i, int pos, char *source, long id, int rrn)
 {
     nodo_avl temp;
 
     disco->seekg(pos*bs,ios_base::beg);
     disco->read((char *)&temp,sizeof(nodo_avl));
 
-    if(cuenta<temp.keyCuenta)
+    if(strcmp(source,temp.source)<0)
     {
         if(temp.hijoIzq==-1)
         {
             nodo_avl temp2;
 
             temp.hijoIzq=i;
-            temp2.keyCuenta=cuenta;
+            strcpy(temp2.source,source);
             temp2.padre=pos;
             temp2.pos=i;
 
-            lista->add(rrn,temp2.cuantos,temp2.inicio,temp2.final);
+            lista->add(id,rrn,temp2.cuantos,temp2.inicio,temp2.final);
 
             disco->seekp(i*bs,ios_base::beg);
             disco->write((const char *)&temp2,sizeof(nodo_avl));
@@ -226,21 +228,21 @@ void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
         }
         else
         {
-            addRecursiva(disco,i,temp.hijoIzq,cuenta,rrn);
+            addRecursiva(disco,i,temp.hijoIzq,source,id,rrn);
         }
     }
-    else if(cuenta>temp.keyCuenta)
+    else if(strcmp(source,temp.source)>0)
     {
         if(temp.hijoDer==-1)
         {            
             nodo_avl temp2;
 
             temp.hijoDer=i;
-            temp2.keyCuenta=cuenta;
+            strcpy(temp2.source,source);
             temp2.padre=pos;
             temp2.pos=i;
 
-            lista->add(rrn,temp2.cuantos,temp2.inicio,temp2.final);
+            lista->add(id,rrn,temp2.cuantos,temp2.inicio,temp2.final);
 
             disco->seekp(i*bs,ios_base::beg);
             disco->write((const char *)&temp2,sizeof(nodo_avl));
@@ -250,7 +252,7 @@ void avl::addRecursiva(fstream *disco,int i, int pos, int cuenta, int rrn)
         }
         else
         {
-            addRecursiva(disco,i,temp.hijoDer,cuenta,rrn);
+            addRecursiva(disco,i,temp.hijoDer,source,id,rrn);
         }
     }
     else
@@ -304,7 +306,7 @@ void avl::RSI(int n)
         disco.seekg(nodo.padre*bs,ios_base::beg);
         disco.read((char *)&pad,sizeof(nodo_avl));
 
-        pad.hijoDer=nodo.hijoIzq;
+        pad.hijoIzq=nodo.hijoIzq;
 
         nodo_avl izq;
 
@@ -416,7 +418,7 @@ void avl::RSD(int n)
         disco.seekg(nodo.padre*bs,ios_base::beg);
         disco.read((char *)&pad,sizeof(nodo_avl));
 
-        pad.hijoIzq=nodo.hijoDer;
+        pad.hijoDer=nodo.hijoDer;
 
         nodo_avl der;
 
@@ -730,17 +732,17 @@ int avl::max(int i, int j)
     }
 }
 
-nodo_avl avl::search(int cuenta)
+nodo_avl avl::search(char *source)
 {
     header h;
 
     disco.seekg(0,ios_base::beg);
     disco.read((char *)&h,sizeof(header));
 
-    return searchRecursiva(h.raiz,cuenta);
+    return searchRecursiva(h.raiz,source);
 }
 
-nodo_avl avl::searchRecursiva(int n, int cuenta)
+nodo_avl avl::searchRecursiva(int n, char *source)
 {
     nodo_avl nodo;
 
@@ -752,15 +754,15 @@ nodo_avl avl::searchRecursiva(int n, int cuenta)
     disco.seekg(n*bs,ios_base::beg);
     disco.read((char *)&nodo,sizeof(nodo_avl));
 
-    if(nodo.keyCuenta!=cuenta)
+    if(strcmp(nodo.source,source)!=0)
     {
-        if(cuenta < nodo.keyCuenta)
+        if(strcmp(source,nodo.source)<0)
         {
-           return searchRecursiva(nodo.hijoIzq,cuenta);
+           return searchRecursiva(nodo.hijoIzq,source);
         }
-        else if(cuenta > nodo.keyCuenta)
+        else if(strcmp(source,nodo.source)>0)
         {
-           return searchRecursiva(nodo.hijoDer,cuenta);
+           return searchRecursiva(nodo.hijoDer,source);
         }
     }
     else
@@ -770,114 +772,114 @@ nodo_avl avl::searchRecursiva(int n, int cuenta)
     //return 0;
 }
 
-void avl::deleteKey(int cuenta)
-{
-    disco.open(name,ios::binary | ios::in | ios::out);
+//void avl::deleteKey(int cuenta)
+//{
+//    disco.open(name,ios::binary | ios::in | ios::out);
 
-    nodo_avl n=search(cuenta);
+//    nodo_avl n=search(cuenta);
 
-    header h;
+//    header h;
 
-    disco.seekg(0,ios_base::beg);
-    disco.read((char *)&h,sizeof(header));
+//    disco.seekg(0,ios_base::beg);
+//    disco.read((char *)&h,sizeof(header));
 
-    if(n.pos==h.raiz && h.cuantos==1)//Poner pos en ves de nextfre-1
-    {
-        h.raiz=-1;
-    }
-    else
-    {
-        if(n.pos!=-1)
-        {
-            deleteKeyRecursiva(n);
-        }
-    }
+//    if(n.pos==h.raiz && h.cuantos==1)//Poner pos en ves de nextfre-1
+//    {
+//        h.raiz=-1;
+//    }
+//    else
+//    {
+//        if(n.pos!=-1)
+//        {
+//            deleteKeyRecursiva(n);
+//        }
+//    }
 
-    h.cuantos--;
+//    h.cuantos--;
 
-    disco.seekp(0,ios_base::beg);
-    disco.write((const char *)&h,sizeof(header));
+//    disco.seekp(0,ios_base::beg);
+//    disco.write((const char *)&h,sizeof(header));
 
-    postOrdenAltura(h.raiz);
-    preOrdenFE(h.raiz);
-    balancear(h.raiz);
+//    postOrdenAltura(h.raiz);
+//    preOrdenFE(h.raiz);
+//    balancear(h.raiz);
 
-    disco.close();
-}
+//    disco.close();
+//}
 
-void avl::deleteKeyRecursiva(nodo_avl n)
-{
-    if(n.hijoDer==-1 && n.hijoIzq==-1)
-    {
-        nodo_avl pad;
+//void avl::deleteKeyRecursiva(nodo_avl n)
+//{
+//    if(n.hijoDer==-1 && n.hijoIzq==-1)
+//    {
+//        nodo_avl pad;
 
-        disco.seekg(n.padre*bs,ios_base::beg);
-        disco.read((char *)&pad,sizeof(nodo_avl));
+//        disco.seekg(n.padre*bs,ios_base::beg);
+//        disco.read((char *)&pad,sizeof(nodo_avl));
 
-        if(pad.hijoDer==n.pos)//Poner pos en ves de nextfree-1
-        {
-            pad.hijoDer=-1;
-        }
-        else
-        {
-            pad.hijoIzq=-1;
-        }
+//        if(pad.hijoDer==n.pos)//Poner pos en ves de nextfree-1
+//        {
+//            pad.hijoDer=-1;
+//        }
+//        else
+//        {
+//            pad.hijoIzq=-1;
+//        }
 
-        disco.seekp(n.padre*bs,ios_base::beg);
-        disco.write((const char *)&pad,sizeof(nodo_avl));
-    }
-    else if(n.hijoIzq!=-1)
-    {
-        nodo_avl otro=getMayor(n.hijoIzq);
-        n.keyCuenta=otro.keyCuenta;
+//        disco.seekp(n.padre*bs,ios_base::beg);
+//        disco.write((const char *)&pad,sizeof(nodo_avl));
+//    }
+//    else if(n.hijoIzq!=-1)
+//    {
+//        nodo_avl otro=getMayor(n.hijoIzq);
+//        n.keyCuenta=otro.keyCuenta;
 
-        disco.seekp(n.pos*bs,ios_base::beg);//Poner pos en ves de nextfree-1
-        disco.write((const char *)&n,sizeof(nodo_avl));
+//        disco.seekp(n.pos*bs,ios_base::beg);//Poner pos en ves de nextfree-1
+//        disco.write((const char *)&n,sizeof(nodo_avl));
 
-        deleteKeyRecursiva(otro);
-    }
-    else
-    {
-        nodo_avl otro=getMenor(n.hijoDer);
-        n.keyCuenta=otro.keyCuenta;
+//        deleteKeyRecursiva(otro);
+//    }
+//    else
+//    {
+//        nodo_avl otro=getMenor(n.hijoDer);
+//        n.keyCuenta=otro.keyCuenta;
 
-        disco.seekp(n.pos*bs,ios_base::beg);//Poner pos en ves de nextfree-1
-        disco.write((const char *)&n,sizeof(nodo_avl));
+//        disco.seekp(n.pos*bs,ios_base::beg);//Poner pos en ves de nextfree-1
+//        disco.write((const char *)&n,sizeof(nodo_avl));
 
-        deleteKeyRecursiva(otro);
-    }
-}
+//        deleteKeyRecursiva(otro);
+//    }
+//}
 
-nodo_avl avl::getMayor(int n)
-{
-    nodo_avl temp;    
+//nodo_avl avl::getMayor(int n)
+//{
+//    nodo_avl temp;
 
-    disco.seekg(n*bs,ios_base::beg);
-    disco.read((char *)&temp,sizeof(nodo_avl));
+//    disco.seekg(n*bs,ios_base::beg);
+//    disco.read((char *)&temp,sizeof(nodo_avl));
 
-    if(temp.hijoDer==-1)
-    {
-        return temp;
-    }
-    else
-    {
-        return getMayor(temp.hijoDer);
-    }
-}
+//    if(temp.hijoDer==-1)
+//    {
+//        return temp;
+//    }
+//    else
+//    {
+//        return getMayor(temp.hijoDer);
+//    }
+//}
 
-nodo_avl avl::getMenor(int n)
-{
-    nodo_avl temp;
+//nodo_avl avl::getMenor(int n)
+//{
+//    nodo_avl temp;
 
-    disco.seekg(n*bs,ios_base::beg);
-    disco.read((char *)&temp,sizeof(nodo_avl));
+//    disco.seekg(n*bs,ios_base::beg);
+//    disco.read((char *)&temp,sizeof(nodo_avl));
 
-    if(temp.hijoIzq==-1)
-    {
-        return temp;
-    }
-    else
-    {
-        return getMenor(temp.hijoIzq);
-    }
-}
+//    if(temp.hijoIzq==-1)
+//    {
+//        return temp;
+//    }
+//    else
+//    {
+//        return getMenor(temp.hijoIzq);
+//    }
+//}

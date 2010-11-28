@@ -21,7 +21,7 @@ class entry
             id=-1;
             rrn=-1;
         }
-        int id;
+        long id;
         int rrn;// protocolo
 };
 
@@ -53,16 +53,19 @@ class btree
 public:
     btree(char *_name);
     void create(int cuantos);
-    void add(int id, int rrn);
-    void addRecursiva(unsigned char *m, int cuantos, int pos, int id, int rrn, bool &ver, entry &promo, int &newp);
-    entry searchRecursivo(int pos, int id);
+    void add(long id, int rrn);
+    int addRecursiva(unsigned char *m, int cuantos, int pos, long id, int rrn, entry &promo, int &newp);
+    entry searchRecursivo(int pos, long id);
     void mostrar();
+    void prueba();
 
 private:
+    void split(unsigned char *m, int cuantos, entry key, int rrn, nodoB &temp, entry &promo, int &newp, nodoB &newtemp);
     void sort(entry *arr, int fin);
     void clear(entry *a, int *b);
     fstream disco;
     char *name;
+    avl *arbol;
 };
 
 #endif // BTREE_H

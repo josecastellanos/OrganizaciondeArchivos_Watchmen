@@ -90,6 +90,7 @@ void data::add(long id, double time, char *source, char *destino, char *protocol
 
     temp.id=id;
     temp.time=time;
+
     strcpy(temp.source,source);
     strcpy(temp.destino,destino);
     strcpy(temp.protocolo,protocolo);

@@ -28,3 +28,6 @@ HEADERS += \
     avllist.h \
     data.h \
     btree.h
+
+OTHER_FILES += \
+    add.txt

@@ -60,14 +60,14 @@ void avlList::create(int cuantos)
     disco.close();
 }
 
-void avlList::add(int rrn, int &cont, int &raiz, int &tail)
+void avlList::add(long id, int rrn, int &cont, int &raiz, int &tail)
 {
     disco.open(name,ios::binary | ios::in | ios::out);
 
     int cuantos;
 
     disco.seekg(0,ios_base::beg);
-    disco.read((char *)&cuantos,sizeof(int));
+    disco.read((char *)&cuantos, sizeof(int));
 
     mapabits map;
 
@@ -78,7 +78,7 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
     disco.seekg(bsize,ios_base::beg);
     disco.read((char *)mapa,cuantos/8);
 
-    if(map.cant_apagados(mapa,cuantos)==0 || exists(rrn,raiz))
+    if(map.cant_apagados(mapa,cuantos)==0 || exists(id,raiz))
     {
         return;
     }
@@ -88,6 +88,7 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
 
     nodo temp;
 
+    temp.id=id;
     temp.rrn=rrn;
     temp.pos=pos;
 
@@ -129,35 +130,9 @@ void avlList::add(int rrn, int &cont, int &raiz, int &tail)
 
 void avlList::mostrar()
 {
-    disco.open(name,ios::binary | ios::in | ios::out);
-
-    cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
-
-    int cuantos;
-
-    disco.seekg(0,ios_base::beg);
-    disco.read((char *)&cuantos,sizeof(int));
-
-    int base=1+(cuantos/8)/bsize;
-
-    nodo temp;
-
-    for(int i=0; i<10; i++)
-    {
-        disco.seekg((base+i)*bsize, ios_base::beg);
-        disco.read((char *)&temp, sizeof(nodo));
-
-        cout<<"Rrn: "<<temp.rrn<<endl;
-        cout<<"Pos: "<<temp.pos<<endl;
-        cout<<"Anterior: "<<temp.anterior<<endl;
-        cout<<"Siguiente: "<<temp.siguiente<<endl;
-        cout<<"----------------------------------"<<endl;
-    }
-
-    disco.close();
 }
 
-bool avlList::exists(int rrn, int &raiz)
+bool avlList::exists(long id, int &raiz)
 {
     nodo temp;
 
@@ -167,7 +142,7 @@ bool avlList::exists(int rrn, int &raiz)
             disco.seekg(sig*bsize,ios_base::beg);
             disco.read((char *)&temp,sizeof(nodo));
 
-            if(rrn==temp.rrn)
+            if(id==temp.id)
             {
                 return true;
             }
