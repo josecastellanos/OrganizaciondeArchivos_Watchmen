@@ -2,66 +2,79 @@
 
 avl::avl(char *_name)
 {
-    cout<<sizeof(nodo_avl);
-
     disco.open(_name,ios::binary | ios::in);
     if(!disco)
-    {        /*
-        validoCrear=true;
-        validoLeer=false;*/
+    {
         disco.open(_name,ios::binary | ios::out);
     }
     else
-    {/*
-        validoCrear=false;
-        validoLeer=true;*/
+    {
         disco.open(_name,ios::binary | ios::in | ios::out);
-    }/*
-    validoUpdate=false;
-    validoEscribir=false;*/
+    }
     disco.close();
     int len=strlen(_name);
     name=new char[len+1];
     memcpy(name,_name,len);
     name[len+1]='\0';
+
+    int n=dondevapunto(name);
+
+    int a=n+8;
+
+    char *avlistname=new char[a+1];
+
+    memcpy(avlistname,name,n);
+    strcat(avlistname,"List.dat");
+    avlistname[a+1]='\0';
+
+    lista = new avlList(avlistname);
 }
 
-void avl::mostrar()
+int avl::dondevapunto(char *a)
 {
-    header h;
-
-    disco.open(name,ios::binary | ios::in | ios::out);
-
-    disco.seekg(0,ios_base::beg);
-    disco.read((char *)&h,sizeof(header));
-
-    int ini=1+(h.total/8)/bs;
-    int fin=ini+h.cuantos;
-
-    for(int i=ini; i<fin; i++)
+    for(int i=0; i<strlen(a); i++)
     {
-        nodo_avl n;
-
-        disco.seekg(i*bs,ios_base::beg);
-        disco.read((char *)&n,sizeof(nodo_avl));
-
-        cout<<"Source: "<<n.source<<endl;
-        cout<<"HijoIzq: "<<n.hijoIzq<<endl;
-        cout<<"HijoDer: "<<n.hijoDer<<endl;
-        cout<<"Altura: "<<n.altura<<endl;
-        cout<<"Padre: "<<n.padre<<endl;
-        cout<<"FE: "<<n.FE<<endl;
-        cout<<"Pos: "<<n.pos<<endl;
-        cout<<"-----------------------------"<<endl;
+        if(a[i]=='.')
+        {
+            return i;
+        }
     }
-
-    disco.close();
 }
+
+//void avl::mostrar()
+//{
+//    header h;
+
+//    disco.open(name,ios::binary | ios::in | ios::out);
+
+//    disco.seekg(0,ios_base::beg);
+//    disco.read((char *)&h,sizeof(header));
+
+//    int ini=1+(h.total/8)/bs;
+//    int fin=ini+h.cuantos;
+
+//    for(int i=ini; i<fin; i++)
+//    {
+//        nodo_avl n;
+
+//        disco.seekg(i*bs,ios_base::beg);
+//        disco.read((char *)&n,sizeof(nodo_avl));
+
+//        cout<<"Source: "<<n.source<<endl;
+//        cout<<"HijoIzq: "<<n.hijoIzq<<endl;
+//        cout<<"HijoDer: "<<n.hijoDer<<endl;
+//        cout<<"Altura: "<<n.altura<<endl;
+//        cout<<"Padre: "<<n.padre<<endl;
+//        cout<<"FE: "<<n.FE<<endl;
+//        cout<<"Pos: "<<n.pos<<endl;
+//        cout<<"-----------------------------"<<endl;
+//    }
+
+//    disco.close();
+//}
 
 void avl::create(int cuantos)
-{/*
-    if(validoCrear)
-    {*/
+{
     disco.open(name,ios::binary | ios::in | ios::out);
 
         header h;
@@ -103,24 +116,13 @@ void avl::create(int cuantos)
             disco.flush();
         }
 
-        lista = new avlList("avlList.dat");
-        lista->create(cuantos*cuantos);
+        lista->create(cuantos);
 
         disco.close();
-        //disco.open(name,ios::binary | ios::in | ios::out);
-
-//        validoCrear=false;
-//        validoEscribir=true;
-//        validoLeer=true;
-    //}
 }
 
 void avl::add(char *source, long id, int rrn)
-{/*
-    if(!validoEscribir)
-    {
-        return;
-    }*/
+{
     disco.open(name,ios::binary | ios::in | ios::out);
 
     header h;
@@ -131,6 +133,7 @@ void avl::add(char *source, long id, int rrn)
     if(h.cuantos==h.total)
     {
         cout<<"No hay espacio"<<endl;
+        disco.close();
         return;
     }
 
@@ -167,7 +170,7 @@ void avl::add(char *source, long id, int rrn)
     }
     else
     {
-        nodo_avl temp=search(source);
+        nodo_avl temp=searchRecursiva(h.raiz,source);
 
         if(temp.pos==-1)
         {            
@@ -732,14 +735,74 @@ int avl::max(int i, int j)
     }
 }
 
-nodo_avl avl::search(char *source)
+void avl::mostrarLista(char *source)
 {
+    nodo_avl temp=search(source);
+
+    if(temp.pos==-1)
+    {
+        return;
+    }
+
+    for(int i=0; i<temp.cuantos; i++)
+    {
+        nodo n=lista->at(i,temp.cuantos,temp.inicio);
+
+        cout<<"Id: "<<n.id<<endl;
+        cout<<"Rrn: "<<n.rrn<<endl;
+    }
+}
+
+void avl::deleteId(char *source, long id)
+{
+    disco.open(name,ios::binary | ios::in | ios::out);
+
     header h;
 
     disco.seekg(0,ios_base::beg);
     disco.read((char *)&h,sizeof(header));
 
-    return searchRecursiva(h.raiz,source);
+    nodo_avl temp=searchRecursiva(h.raiz,source);
+
+    if(temp.pos==-1)
+    {
+        disco.close();
+
+        return;
+    }
+
+    for(int i=0; i<temp.cuantos; i++)
+    {
+        nodo n=lista->at(i,temp.cuantos,temp.inicio);
+
+        if(n.id==id)
+        {
+            lista->deleteRrn(i,temp.cuantos,temp.inicio,temp.final);
+
+            break;
+        }
+    }
+
+    disco.seekp(temp.pos*bs,ios_base::beg);
+    disco.write((const char *)&temp,sizeof(nodo_avl));
+
+    disco.close();
+}
+
+nodo_avl avl::search(char *source)
+{
+    disco.open(name,ios::binary | ios::in | ios::out);
+
+    header h;
+
+    disco.seekg(0,ios_base::beg);
+    disco.read((char *)&h,sizeof(header));
+
+    nodo_avl temp=searchRecursiva(h.raiz,source);
+
+    disco.close();
+
+    return temp;
 }
 
 nodo_avl avl::searchRecursiva(int n, char *source)
@@ -765,11 +828,8 @@ nodo_avl avl::searchRecursiva(int n, char *source)
            return searchRecursiva(nodo.hijoDer,source);
         }
     }
-    else
-    {
-        return nodo;
-    }
-    //return 0;
+
+    return nodo;
 }
 
 //void avl::deleteKey(int cuenta)

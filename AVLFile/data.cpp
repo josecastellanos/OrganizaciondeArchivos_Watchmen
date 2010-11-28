@@ -12,13 +12,44 @@ data::data(char *_name)
         disco.open(_name,ios::binary | ios::in | ios::out);
     }
     disco.close();
+
     int len=strlen(_name);
     name=new char[len+1];
     memcpy(name,_name,len);
-    name[len+1]='\0';
+    name[len+1]='\0';    
+
+    int n=dondevapunto(name);
+
+    int a=n+10;
+    int b=n+8;
+
+    char *bname=new char[a+1];
+    char *avlname=new char[b+1];
+
+    memcpy(bname,name,n);
+    strcat(bname,"_btree.dat");
+    bname[a+1]='\0';
+
+    memcpy(avlname,name,n);
+    strcat(avlname,"_avl.dat");
+    avlname[b+1]='\0';
+
+    arbolB=new btree(bname);
+    arbolAVL=new avl(avlname);
 }
 
-void data::create(int cuantos)
+int data::dondevapunto(char *a)
+{
+    for(int i=0; i<strlen(a); i++)
+    {
+        if(a[i]=='.')
+        {
+            return i;
+        }
+    }
+}
+
+void data::create(int cuantos)//Modificar cuando este lo de hash
 {
     disco.open(name,ios::binary | ios::in | ios::out);
 
@@ -57,6 +88,9 @@ void data::create(int cuantos)
         disco.flush();
     }
 
+    arbolB->create(cuantos);
+    arbolAVL->create(cuantos);
+
     disco.close();
 }
 
@@ -78,8 +112,9 @@ void data::add(long id, double time, char *source, char *destino, char *protocol
     disco.seekg(blocks,ios_base::beg);
     disco.read((char *)mapabits,cuantos/8);
 
-    if(map.cant_apagados(mapabits,cuantos)==0)//Poner lo de buscar en el arbol B para ver si existe
+    if(map.cant_apagados(mapabits,cuantos)==0 && arbolB->search(id).rrn!=-1)//Poner lo de buscar en el arbol B para ver si existe
     {
+        disco.close();
         return;
     }
 
@@ -102,6 +137,9 @@ void data::add(long id, double time, char *source, char *destino, char *protocol
     disco.seekp(blocks,ios_base::beg);
     disco.write((const char *)mapabits,cuantos/8);
 
+    arbolB->add(id,pos);
+    arbolAVL->add(source,id,pos);
+
     disco.close();
 }
 
@@ -123,12 +161,30 @@ void data::deleteRecord(long id)
     disco.seekg(blocks,ios_base::beg);
     disco.read((char *)mapabits,cuantos/8);
 
-    int rrn;
+    int rrn=arbolB->search(id).rrn;
+
+    if(rrn==-1)
+    {
+        disco.close();
+        return;
+    }
+
+    nodo_data temp;
+
+    disco.seekg(rrn*blocks,ios_base::beg);
+    disco.read((char *)&temp,sizeof(nodo_data));
 
     map.killblock(mapabits,rrn,cuantos);
 
     disco.seekp(blocks,ios_base::beg);
     disco.write((const char *)mapabits,cuantos/8);
 
+    arbolAVL->deleteId(temp.source,id);
+
     disco.close();
+}
+
+void data::search(char *source)
+{
+    arbolAVL->mostrarLista(source);
 }

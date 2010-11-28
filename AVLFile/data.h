@@ -2,6 +2,9 @@
 #define DATA_H
 
 #include "avl.h"
+#include "btree.h"
+#include "QString"
+#include "QStringList"
 
 const int blocks=320;
 
@@ -32,8 +35,14 @@ class data
         void create(int cuantos);
         void add(long int id, double time, char *source, char *destino, char *protocolo, char *info);
         void deleteRecord(long int id);
+        void search(char *source);
+
+    private:
+        int dondevapunto(char *a);
         fstream disco;
         char *name;
+        btree *arbolB;
+        avl *arbolAVL;
 
 };
 

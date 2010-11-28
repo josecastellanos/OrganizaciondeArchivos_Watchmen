@@ -1,7 +1,4 @@
-#include "avllist.h"
-#include <qalgorithms.h>
-#include "avl.h"
-#include "btree.h"
+#include "data.h"
 
 class entry_A
 {
@@ -17,7 +14,12 @@ class entry_A
 
 int main(int argc, char *argv[])
 {
-    cout<<sizeof(entry_A);
+    data a("holaaa.dat");
+    a.create(10);
+    a.add(1,1.00,"hola","jeje","ohh","fu");
+    a.search("hola");
+    a.deleteRecord(1);
+    a.search("hola");
 
 //    cout<<sizeof(nodo_data)<<endl;
 //    int a[3];
@@ -50,19 +52,21 @@ int main(int argc, char *argv[])
 
 //        avl a("avl.dat");
 //        a.create(10);
-//        a.add("a",5);/*
-//        a.add("a",6);
-//        a.add("a",9);*/
-//        a.add("b",4);
-//        a.add("c",3);/*
-//        a.add("c",2);*/
-//        a.add("d",7);
-//        a.add("e",8);
-//        /*a.add("f",1);
-//        a.add("f",2);*/
-//        a.add("f",1);
-//        a.add("g",5);
-//        a.mostrar();
+//        a.add("a",5,0);
+//        a.add("a",6,0);
+//        a.add("a",9,0);
+//        a.add("b",4,0);
+//        a.add("c",3,0);
+//        a.add("c",2,0);
+//        a.add("d",7,0);
+//        a.add("e",8,0);
+//        a.add("f",1,0);
+//        a.add("f",2,0);
+//        a.add("f",1,0);
+//        a.add("g",5,0);
+//        a.deleteId("a",5);
+//        a.deleteId("a",6);
+//        a.lista->mostrar();
 
 //        btree a("btree.dat");
 //        a.create(25);

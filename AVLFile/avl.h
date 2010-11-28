@@ -60,7 +60,9 @@ class avl
         void create(int cuantos);
         void add(char *source, long id, int rrn);
         nodo_avl search(char *source);
-        void mostrar();
+        void mostrarLista(char *source);
+        void deleteId(char *source, long id);
+        avlList *lista;
 
     private:
         void addRecursiva(fstream *disco, int i, int pos, char *source, long id, int rrn);
@@ -81,9 +83,9 @@ class avl
         void deleteKeyRecursiva(nodo_avl n);
         nodo_avl getMayor(int n);
         nodo_avl getMenor(int n);
+        int dondevapunto(char *a);
         fstream disco;
-        char *name;        
-        avlList *lista;
+        char *name;
 };
 
 #endif // AVL_H

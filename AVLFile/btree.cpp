@@ -81,6 +81,7 @@ void btree::add(long id, int rrn)
     if(h.cuantos==h.total)
     {
         cout<<"Full";
+        disco.close();
         return;
     }
 
@@ -141,6 +142,7 @@ void btree::add(long id, int rrn)
         }
         else
         {
+            disco.close();
             return;
         }
         //si existe agregarlo(Falta Funca Agregar), si no Return;
@@ -448,62 +450,48 @@ void btree::split(unsigned char *m, int cuantos, entry key, int rrn, nodoB &temp
 //    }
 //}
 
-void btree::prueba()
-{
-    disco.open(name,ios_base::binary | ios_base::in | ios_base::out);
+//void btree::mostrar()
+//{
+//    disco.open(name,ios::binary | ios::in | ios::out);
 
-    header h;
+//    cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
 
-    disco.seekg(0,ios_base::beg);
-    disco.read((char*)&h,sizeof(header));
+//    header h;
 
-    searchRecursivo(h.raiz,8);
+//    disco.seekg(0,ios_base::beg);
+//    disco.read((char *)&h,sizeof(header));
 
-    disco.close();
-}
+//    int base=1+(h.total/8)/blocksize;
 
-void btree::mostrar()
-{
-    disco.open(name,ios::binary | ios::in | ios::out);
+//    nodoB temp;
 
-    cout<<"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&"<<endl;
+//    for(int i=0; i<25; i++)
+//    {
+//        cout<<"Pos: "<<base+i<<endl;
 
-    header h;
+//        disco.seekg((base+i)*blocksize, ios_base::beg);
+//        disco.read((char *)&temp, sizeof(nodoB));
 
-    disco.seekg(0,ios_base::beg);
-    disco.read((char *)&h,sizeof(header));
+//        int j;
 
-    int base=1+(h.total/8)/blocksize;
-
-    nodoB temp;
-
-    for(int i=0; i<25; i++)
-    {
-        cout<<"Pos: "<<base+i<<endl;
-
-        disco.seekg((base+i)*blocksize, ios_base::beg);
-        disco.read((char *)&temp, sizeof(nodoB));
-
-        int j;
-
-        for(j=0; j<maxLlaves; j++)
-        {
-            cout<<"LlavesPrimarias["<<j<<"].id: "<<temp.llavesPrimarias[j].id<<endl;
-            cout<<"LlavesPrimarias["<<j<<"].rrn: "<<temp.llavesPrimarias[j].rrn<<endl;
-        }
+//        for(j=0; j<maxLlaves; j++)
+//        {
+//            cout<<"LlavesPrimarias["<<j<<"].id: "<<temp.llavesPrimarias[j].id<<endl;
+//            cout<<"LlavesPrimarias["<<j<<"].rrn: "<<temp.llavesPrimarias[j].rrn<<endl;
+//        }
 
 
-        for(j=0; j<maxApuntadores; j++)
-        {
-            cout<<"Apuntadores["<<j<<"]: "<<temp.apuntadores[j]<<endl;
-        }
+//        for(j=0; j<maxApuntadores; j++)
+//        {
+//            cout<<"Apuntadores["<<j<<"]: "<<temp.apuntadores[j]<<endl;
+//        }
 
-        cout<<"Cuantos: "<<temp.cuantos<<endl;
-        cout<<"----------------------------------"<<endl;
-    }
+//        cout<<"Cuantos: "<<temp.cuantos<<endl;
+//        cout<<"----------------------------------"<<endl;
+//    }
 
-    disco.close();
-}
+//    disco.close();
+//}
 
 void btree::clear(entry *a, int *b)
 {
@@ -518,21 +506,20 @@ void btree::clear(entry *a, int *b)
     }
 }
 
-void btree::sort(entry *arr, int fin)
+entry btree::search(long id)
 {
-    for(int i=0; i<(fin-1); i++)
-    {
-        entry ii=arr[i];
-        for(int j=i+1; j<fin; j++)
-        {
-            entry jj=arr[j];
-            if(arr[i].id > arr[j].id)
-            {
-                arr[i]=jj;
-                arr[j]=ii;
-            }
-        }
-    }
+    disco.open(name,ios_base::binary | ios_base::in | ios_base::out);
+
+    header h;
+
+    disco.seekg(0,ios_base::beg);
+    disco.read((char*)&h,sizeof(header));
+
+    entry temp=searchRecursivo(h.raiz,id);
+
+    disco.close();
+
+    return temp;
 }
 
 entry btree::searchRecursivo(int pos, long id)

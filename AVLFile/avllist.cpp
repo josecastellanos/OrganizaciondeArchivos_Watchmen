@@ -80,6 +80,7 @@ void avlList::add(long id, int rrn, int &cont, int &raiz, int &tail)
 
     if(map.cant_apagados(mapa,cuantos)==0 || exists(id,raiz))
     {
+        disco.close();
         return;
     }
 
@@ -130,6 +131,31 @@ void avlList::add(long id, int rrn, int &cont, int &raiz, int &tail)
 
 void avlList::mostrar()
 {
+    disco.open(name,ios::binary | ios::in | ios::out);
+
+    int cuantos;
+
+    disco.seekg(0,ios_base::beg);
+    disco.read((char *)&cuantos, sizeof(int));
+
+    int base=(1+(cuantos/8)/bsize);
+
+    for(int i=0; i<10; i++)
+    {
+        nodo temp;
+
+        disco.seekg((base+i)*bsize, ios_base::beg);
+        disco.read((char *)&temp, sizeof(nodo));
+
+        cout<<"------------------------------------"<<endl;
+        cout<<"Pos: "<<temp.pos<<endl;
+        cout<<"Id: "<<temp.id<<endl;
+        cout<<"Rrn: "<<temp.rrn<<endl;
+        cout<<"Siguiente: "<<temp.siguiente<<endl;
+        cout<<"Anterior: "<<temp.anterior<<endl;
+    }
+
+    disco.close();
 }
 
 bool avlList::exists(long id, int &raiz)
@@ -211,6 +237,11 @@ bool avlList::exists(long id, int &raiz)
 
 nodo avlList::at(int pos, int &cont, int &raiz)
 {
+    if(disco.is_open())
+    {
+        disco.close();
+    }
+
     disco.open(name, ios::binary | ios::in | ios::out);
 
     nodo temp;
@@ -226,7 +257,7 @@ nodo avlList::at(int pos, int &cont, int &raiz)
 
             if(c==pos)
             {
-                return temp;
+                break;
             }
 
             sig=temp.siguiente;
@@ -344,6 +375,8 @@ void avlList::deleteRrn(int pos, int &cont, int &raiz, int &tail)
                     b.siguiente=-1;
                 }
                 cont--;
+
+                break;
             }
 
             s=temp.siguiente;

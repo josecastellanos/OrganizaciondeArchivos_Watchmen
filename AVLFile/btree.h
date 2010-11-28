@@ -55,17 +55,14 @@ public:
     void create(int cuantos);
     void add(long id, int rrn);
     int addRecursiva(unsigned char *m, int cuantos, int pos, long id, int rrn, entry &promo, int &newp);
-    entry searchRecursivo(int pos, long id);
-    void mostrar();
-    void prueba();
+    entry search(long id);
 
-private:
+private:    
+    entry searchRecursivo(int pos, long id);
     void split(unsigned char *m, int cuantos, entry key, int rrn, nodoB &temp, entry &promo, int &newp, nodoB &newtemp);
-    void sort(entry *arr, int fin);
     void clear(entry *a, int *b);
     fstream disco;
     char *name;
-    avl *arbol;
 };
 
 #endif // BTREE_H
