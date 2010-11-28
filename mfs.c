@@ -550,9 +550,9 @@ void main(int argc, char *argv[])
 
         int dsize=atoi(argv[2]);
 
-        if(dsize%8!=0)
+        if(dsize%8192!=0)
         {
-            dsize+=8-dsize%8;
+            dsize+=8192-dsize%8192;
         }
 
         temp.disksize=dsize;
