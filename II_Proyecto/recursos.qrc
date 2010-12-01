@@ -4,5 +4,6 @@
         <file>images/delete.png</file>
         <file>images/find.png</file>
         <file>images/update.png</file>
+        <file>images/fondo.jpg</file>
     </qresource>
 </RCC>

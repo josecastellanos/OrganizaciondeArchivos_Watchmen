@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created: Tue Nov 30 17:07:08 2010
+** Created: Tue Nov 30 18:43:16 2010
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -50,6 +50,10 @@ public:
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
         MainWindow->resize(900, 700);
+        MainWindow->setStyleSheet(QString::fromUtf8("QMainWindow\n"
+"{\n"
+"	background-image: url(:/images/fondo.jpg);\n"
+"}"));
         actionOpen_Disk = new QAction(MainWindow);
         actionOpen_Disk->setObjectName(QString::fromUtf8("actionOpen_Disk"));
         actionCreate_Disk = new QAction(MainWindow);

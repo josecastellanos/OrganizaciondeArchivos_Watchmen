@@ -13,6 +13,12 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow
+{
+	background-image: url(:/images/fondo.jpg);
+}</string>
+  </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QLCDNumber" name="lcdNumber">
     <property name="geometry">
