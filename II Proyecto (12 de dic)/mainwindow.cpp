@@ -231,7 +231,9 @@ void MainWindow::on_actionAbout_II_Proyecto_triggered()
 
 void MainWindow::on_actionCreate_Disk_triggered()
 {
+    agrego=false;
     this->open_disk();
+    this->timing(agrego);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
