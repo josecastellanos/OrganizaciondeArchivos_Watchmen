@@ -254,7 +254,7 @@ void MainWindow::on_actionDelete_Song_triggered()
 {
     bool ok;
     QString nombreCancion = QInputDialog::getText(this, tr("Mp3 Name"),
-                                              tr("Mp3 Name to Export: "), QLineEdit::Normal,
+                                              tr("Mp3 Name to Delete: "), QLineEdit::Normal,
                                               QDir::home().dirName(), &ok);
 
     listaParametros.clear();
@@ -269,7 +269,7 @@ void MainWindow::on_actionTag_Song_triggered()
 {
     bool ok;
     QString nombreCancion = QInputDialog::getText(this, tr("Mp3 Name"),
-                                                  tr("Mp3 Name to Export: "), QLineEdit::Normal,
+                                                  tr("Mp3 Name to Tag: "), QLineEdit::Normal,
                                               QDir::home().dirName(), &ok);
     QString tag = QInputDialog::getText(this, tr("Tag"),
                                               tr("Tag: "), QLineEdit::Normal,

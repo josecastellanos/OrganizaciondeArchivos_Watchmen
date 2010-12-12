@@ -1,8 +1,8 @@
 /********************************************************************************
 ** Form generated from reading UI file 'dialog.ui'
 **
-** Created: Tue 16. Nov 12:28:27 2010
-**      by: Qt User Interface Compiler version 4.6.3
+** Created: Sun Dec 12 10:51:56 2010
+**      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -53,9 +53,25 @@ public:
         QIcon icon;
         icon.addFile(QString::fromUtf8(":/images/logo.png"), QSize(), QIcon::Normal, QIcon::Off);
         Dialog->setWindowIcon(icon);
+        Dialog->setStyleSheet(QString::fromUtf8("QDialog\n"
+"{\n"
+"	background-image: url(:/images/fondond.png);\n"
+"}"));
         label = new QLabel(Dialog);
         label->setObjectName(QString::fromUtf8("label"));
         label->setGeometry(QRect(10, 10, 501, 91));
+        label->setStyleSheet(QString::fromUtf8("QLabel\n"
+"{\n"
+"	image: url(:/images/newdisk.png);\n"
+"background-color: transparent;\n"
+"border-style: outset;\n"
+"border-width: 2px;\n"
+"border-radius: 10px;\n"
+"border-color: transparent;\n"
+"font: bold 22px;\n"
+"min-width:4m;\n"
+"padding: 6px;\n"
+"}"));
         btnMp3Folder = new QPushButton(Dialog);
         btnMp3Folder->setObjectName(QString::fromUtf8("btnMp3Folder"));
         btnMp3Folder->setGeometry(QRect(450, 230, 20, 26));
@@ -124,7 +140,7 @@ public:
     void retranslateUi(QDialog *Dialog)
     {
         Dialog->setWindowTitle(QApplication::translate("Dialog", "Create Disk", 0, QApplication::UnicodeUTF8));
-        label->setText(QApplication::translate("Dialog", "Aqui Va un Logo Macizo de New Disk", 0, QApplication::UnicodeUTF8));
+        label->setText(QString());
         btnMp3Folder->setText(QApplication::translate("Dialog", "...", 0, QApplication::UnicodeUTF8));
         lnSetExe->setText(QString());
         label_2->setText(QApplication::translate("Dialog", "Disk Name:", 0, QApplication::UnicodeUTF8));

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'about.ui'
 **
-** Created: Thu Nov 25 14:03:08 2010
+** Created: Sun Dec 12 10:48:21 2010
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -48,7 +48,7 @@ public:
         label->setFont(font);
         label_2 = new QLabel(about);
         label_2->setObjectName(QString::fromUtf8("label_2"));
-        label_2->setGeometry(QRect(180, 190, 101, 91));
+        label_2->setGeometry(QRect(190, 200, 101, 91));
         label_2->setPixmap(QPixmap(QString::fromUtf8(":/images/logo.png")));
         label_2->setScaledContents(true);
         commandLinkButton = new QCommandLinkButton(about);
@@ -56,7 +56,7 @@ public:
         commandLinkButton->setGeometry(QRect(10, 150, 191, 41));
         commandLinkButton_2 = new QCommandLinkButton(about);
         commandLinkButton_2->setObjectName(QString::fromUtf8("commandLinkButton_2"));
-        commandLinkButton_2->setGeometry(QRect(10, 200, 172, 41));
+        commandLinkButton_2->setGeometry(QRect(10, 200, 191, 41));
         QWidget::setTabOrder(commandLinkButton_2, commandLinkButton);
 
         retranslateUi(about);

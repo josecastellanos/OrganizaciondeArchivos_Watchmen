@@ -3,5 +3,7 @@
         <file>images/logo.png</file>
         <file>images/icono.png</file>
         <file>images/fondo.png</file>
+        <file>images/fondond.png</file>
+        <file>images/newdisk.png</file>
     </qresource>
 </RCC>

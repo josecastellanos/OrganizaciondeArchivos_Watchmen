@@ -1,8 +1,8 @@
 /********************************************************************************
 ** Form generated from reading UI file 'mainwindow.ui'
 **
-** Created: Thu 25. Nov 14:30:14 2010
-**      by: Qt User Interface Compiler version 4.6.3
+** Created: Sun Dec 12 10:51:00 2010
+**      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
@@ -22,7 +22,6 @@
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QStatusBar>
-#include <QtGui/QToolBar>
 #include <QtGui/QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -50,7 +49,6 @@ public:
     QMenu *menuNew_Disk;
     QMenu *menuTools;
     QMenu *menuAbout;
-    QToolBar *mainToolBar;
     QStatusBar *statusBar;
 
     void setupUi(QMainWindow *MainWindow)
@@ -89,15 +87,15 @@ public:
         centralWidget->setObjectName(QString::fromUtf8("centralWidget"));
         lwTags = new QListWidget(centralWidget);
         lwTags->setObjectName(QString::fromUtf8("lwTags"));
-        lwTags->setGeometry(QRect(20, 20, 200, 601));
+        lwTags->setGeometry(QRect(20, 20, 200, 611));
         lwTags->setStyleSheet(QString::fromUtf8(""));
         lwSongs = new QListWidget(centralWidget);
         lwSongs->setObjectName(QString::fromUtf8("lwSongs"));
-        lwSongs->setGeometry(QRect(240, 80, 641, 321));
+        lwSongs->setGeometry(QRect(240, 20, 641, 391));
         lwSongs->setStyleSheet(QString::fromUtf8(""));
         groupBox = new QGroupBox(centralWidget);
         groupBox->setObjectName(QString::fromUtf8("groupBox"));
-        groupBox->setGeometry(QRect(240, 420, 421, 200));
+        groupBox->setGeometry(QRect(240, 430, 421, 200));
         groupBox->setStyleSheet(QString::fromUtf8("QGroupBox\n"
 "{\n"
 "	background-image: url(:/images/info2.png);\n"
@@ -113,11 +111,11 @@ public:
         InfoCancion = new QLabel(groupBox);
         InfoCancion->setObjectName(QString::fromUtf8("InfoCancion"));
         InfoCancion->setEnabled(true);
-        InfoCancion->setGeometry(QRect(0, 0, 421, 200));
+        InfoCancion->setGeometry(QRect(0, 10, 421, 200));
         InfoCancion->setStyleSheet(QString::fromUtf8(""));
         label = new QLabel(centralWidget);
         label->setObjectName(QString::fromUtf8("label"));
-        label->setGeometry(QRect(679, 420, 201, 200));
+        label->setGeometry(QRect(679, 430, 201, 200));
         label->setStyleSheet(QString::fromUtf8("QLabel\n"
 "{\n"
 "	background-image: url(:/images/logo.png);\n"
@@ -125,7 +123,7 @@ public:
         MainWindow->setCentralWidget(centralWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QString::fromUtf8("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 900, 21));
+        menuBar->setGeometry(QRect(0, 0, 900, 23));
         menuNew_Disk = new QMenu(menuBar);
         menuNew_Disk->setObjectName(QString::fromUtf8("menuNew_Disk"));
         menuTools = new QMenu(menuBar);
@@ -133,9 +131,6 @@ public:
         menuAbout = new QMenu(menuBar);
         menuAbout->setObjectName(QString::fromUtf8("menuAbout"));
         MainWindow->setMenuBar(menuBar);
-        mainToolBar = new QToolBar(MainWindow);
-        mainToolBar->setObjectName(QString::fromUtf8("mainToolBar"));
-        MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
         statusBar = new QStatusBar(MainWindow);
         statusBar->setObjectName(QString::fromUtf8("statusBar"));
         MainWindow->setStatusBar(statusBar);
@@ -172,7 +167,7 @@ public:
         actionShow_Tags->setText(QApplication::translate("MainWindow", "Show Tags", 0, QApplication::UnicodeUTF8));
         actionTag_Song->setText(QApplication::translate("MainWindow", "Tag Song", 0, QApplication::UnicodeUTF8));
         actionAbout_mfs->setText(QApplication::translate("MainWindow", "About mfs", 0, QApplication::UnicodeUTF8));
-        groupBox->setTitle(QApplication::translate("MainWindow", "GroupBox", 0, QApplication::UnicodeUTF8));
+        groupBox->setTitle(QApplication::translate("MainWindow", "Information", 0, QApplication::UnicodeUTF8));
         InfoCancion->setText(QString());
         label->setText(QString());
         menuNew_Disk->setTitle(QApplication::translate("MainWindow", "File", 0, QApplication::UnicodeUTF8));

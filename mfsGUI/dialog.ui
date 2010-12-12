@@ -17,6 +17,12 @@
    <iconset resource="recursos.qrc">
     <normaloff>:/images/logo.png</normaloff>:/images/logo.png</iconset>
   </property>
+  <property name="styleSheet">
+   <string notr="true">QDialog
+{
+	background-image: url(:/images/fondond.png);
+}</string>
+  </property>
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
@@ -26,8 +32,22 @@
      <height>91</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QLabel
+{
+	image: url(:/images/newdisk.png);
+background-color: transparent;
+border-style: outset;
+border-width: 2px;
+border-radius: 10px;
+border-color: transparent;
+font: bold 22px;
+min-width:4m;
+padding: 6px;
+}</string>
+   </property>
    <property name="text">
-    <string>Aqui Va un Logo Macizo de New Disk</string>
+    <string/>
    </property>
   </widget>
   <widget class="QPushButton" name="btnMp3Folder">
