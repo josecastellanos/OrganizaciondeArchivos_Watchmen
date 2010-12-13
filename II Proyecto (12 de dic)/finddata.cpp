@@ -19,9 +19,9 @@ void findData::on_find_clicked()
     {
         //Destino
 
-        if(ui->lineEdit->text().count() < 15)
+        if(ui->lineEdit->text().count() > 15)
         {
-            QMessageBox::warning(this,"Error","Ha Tecleado mal el Destino",0,0);
+            QMessageBox::warning(this,"Error","Ha tecleado mal el Destino",0,0);
             return;
         }
 
@@ -36,9 +36,9 @@ void findData::on_find_clicked()
     {
         //Source        
 
-        if(ui->lineEdit->text().count() < 15)
+        if(ui->lineEdit->text().count() > 15)
         {
-            QMessageBox::warning(this,"Error","Ha Tecleado mal el Destino",0,0);
+            QMessageBox::warning(this,"Error","Ha tecleado mal el Source",0,0);
             return;
         }
 

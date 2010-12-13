@@ -232,6 +232,15 @@ void MainWindow::on_actionAbout_II_Proyecto_triggered()
 void MainWindow::on_actionCreate_Disk_triggered()
 {
     agrego=false;
+
+    this->timeAddLlavesPrimarias=0;
+    this->timeAddLlavesSecundarias=0;
+    this->timeSearchAvl=0;
+    this->timeSearchHashDestino=0;
+    this->timeSearchHashSource=0;
+    this->timeTotalPrimarias=0;
+    this->timeTotalSecundarias=0;
+
     this->open_disk();
     this->timing(agrego);
 }
